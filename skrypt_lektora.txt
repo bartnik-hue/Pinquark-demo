@@ -1,0 +1,64 @@
+================================================================================
+SKRYPT DLA LEKTORA — PREZENTACJA PINQUARK WMS
+Wersja dopasowana do prezentacji multimedialnej (czas na slajd: ok. 12-15 sekund)
+Ton: Nowoczesny, pewny, biznesowo-technologiczny, dynamiczny
+================================================================================
+
+[SLAJD 1: WPROWADZENIE / HOOK]
+Czas: 0:00 - 0:13
+Treść lektora:
+"Bóg stworzył świat w siedem dni. Z nami stworzysz inteligentny magazyn w 24 godziny! Poznaj Pinquark WMS – nowoczesną platformę w chmurze napędzaną sztuczną inteligencją i technologią UWB. Koniec z wielomiesięcznymi wdrożeniami. Rozwijaj logistykę bez barier."
+
+--------------------------------------------------------------------------------
+
+[SLAJD 2: TRZY FILARY PLATFORMY]
+Czas: 0:13 - 0:26
+Treść lektora:
+"Trzy filary Pinquark: Po pierwsze – Stwórz. Uruchom chmurowy magazyn w 5 minut metodą drag and drop. Po drugie – Zoptymalizuj. Zredukuj koszty nawet o połowę dzięki algorytmom AI. Po trzecie – Napędzaj. Skaluj swój biznes w elastycznym modelu subskrypcyjnym."
+
+--------------------------------------------------------------------------------
+
+[SLAJD 3: KREATOR LOW-CODE & PWA]
+Czas: 0:26 - 0:39
+Treść lektora:
+"Zarządzaj bez programistów. Wizualny edytor low-code pozwala kierownikowi w kilka chwil dostosować ekrany pod każdy proces. A dzięki standardowi PWA system działa błyskawicznie na profesjonalnych kolektorach Zebra i Honeywell oraz zwykłych smartfonach."
+
+--------------------------------------------------------------------------------
+
+[SLAJD 4: SYMULACJA AI I ANTYKOLIZJA]
+Czas: 0:39 - 0:54
+Treść lektora:
+"Zobacz różnicę. Tradycyjny magazyn to błądzenie, zatory i groźne sytuacje z wózkami widłowymi. Algorytm Pinquark AI wyznacza najkrótszą trasę kompletacji w alejkach, dynamicznie omija zablokowane korytarze i w czasie rzeczywistym chroni pracowników przed kolizją."
+
+--------------------------------------------------------------------------------
+
+[SLAJD 5: PINQUARK NAVIGATOR & CZUJNIKI UWB]
+Czas: 0:54 - 1:07
+Treść lektora:
+"Nawigacja wewnątrzmagazynowa z dokładnością do 50 centymetrów. Czujniki Ultra-Wideband zapewniają pełną widoczność każdego wózka i pracownika. Koniec z błądzeniem nowych osób – terminal prowadzi magazyniera krok po kroku jak nawigacja samochodowa."
+
+--------------------------------------------------------------------------------
+
+[SLAJD 6: PEŁNY ZAKRES PROCESÓW & API]
+Czas: 1:07 - 1:20
+Treść lektora:
+"Jeden system do wszystkich zadań: od awizacji i rozładunku, przez regały wysokiego składu, multi-order picking, aż po zlecenia produkcyjne i wysyłki kurierskie. Otwarte API REST zapewnia natychmiastową łączność z Twoim systemem ERP i platformą e-commerce."
+
+--------------------------------------------------------------------------------
+
+[SLAJD 7: CASE STUDIES & FAKTY W LICZBACH]
+Czas: 1:20 - 1:34
+Treść lektora:
+"Sprawdzone u liderów rynku. W H2 Dystrybucja skrócono trasy kompletacji o 25% i obsłużono rekordowe 600 zamówień dziennie bez powiększania zespołu. Zaufały nam także Vision Express, Laude Smart Intermodal oraz Clip Group."
+
+--------------------------------------------------------------------------------
+
+[SLAJD 8: KALKULATOR ROI & OFERTA]
+Czas: 1:34 - 1:50
+Treść lektora:
+"Prosty i przejrzysty model: 249 złotych netto za użytkownika miesięcznie. Wszystko w cenie – serwery w chmurze, wsparcie techniczne i silnik AI. Inwestycja zwraca się już w pierwszym miesiącu dzięki oszczędności setek roboczogodzin. Sprawdź Pinquark na swoim magazynie!"
+
+================================================================================
+KONIEC SKRYPTU
+Łączny czas odtworzenia: ok. 1 min 50 s
+================================================================================

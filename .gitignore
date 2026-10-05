@@ -1,0 +1,17 @@
+# System & Temporary Dumps
+*.zip
+*.ps1
+*_dump.txt
+page_*.png
+pres_*.txt
+extracted_all_pdfs.txt
+scratch/
+.system_generated/
+pinquark/
+
+# Keep root ElevenLabs raw source out of git to avoid duplication (assets/audio/ contains full and split audios)
+ElevenLabs_*.mp3
+
+# OS files
+Thumbs.db
+.DS_Store

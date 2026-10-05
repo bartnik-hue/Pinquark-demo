@@ -1,0 +1,3630 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pinquark WMS — Inteligentny Magazyn w Chmurze</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #050814;
+      --bg-surface: #0a0f24;
+      --bg-card: rgba(13, 20, 42, 0.85);
+      --bg-card-hover: rgba(22, 33, 68, 0.95);
+      
+      --border-frame: rgba(255, 0, 122, 0.35);
+      --border-card: rgba(255, 255, 255, 0.1);
+      --border-glow: rgba(0, 210, 255, 0.25);
+      
+      --pink: #ff007a;
+      --pink-glow: rgba(255, 0, 122, 0.45);
+      --pink-light: #ff3399;
+      --cyan: #00d2ff;
+      --cyan-glow: rgba(0, 210, 255, 0.4);
+      --purple: #8b5cf6;
+      --green: #00e676;
+      --green-glow: rgba(0, 230, 118, 0.35);
+      --yellow: #ffb703;
+      --red: #ef4444;
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-main);
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
+      user-select: none;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(139, 92, 246, 0.16) 0%, transparent 45%),
+        radial-gradient(circle at 85% 85%, rgba(255, 0, 122, 0.14) 0%, transparent 50%),
+        radial-gradient(circle at 50% 50%, rgba(0, 210, 255, 0.05) 0%, transparent 65%);
+    }
+
+    /* TOP BAR / NAVIGATION HEADER - AUTO-HIDING WITH SLIDE DOWN ON HOVER & PROXIMITY */
+    .top-bar {
+      height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 36px;
+      background: rgba(5, 8, 20, 0.95);
+      backdrop-filter: blur(24px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      transform: translateY(-84%);
+      transition: transform 0.38s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.38s ease;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+    }
+
+    .top-bar:hover,
+    .top-bar.revealed {
+      transform: translateY(0);
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.9), 0 0 25px rgba(255, 0, 122, 0.2);
+    }
+
+    /* SUBTLE BOTTOM TAB HANDLE TO SHOW WHERE NAV BAR IS */
+    .top-bar-reveal-handle {
+      position: absolute;
+      bottom: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(13, 20, 42, 0.95);
+      border: 1px solid var(--border-frame);
+      border-top: none;
+      border-radius: 0 0 12px 12px;
+      padding: 4px 20px 5px 20px;
+      font-size: 0.74rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--pink);
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6), 0 0 14px var(--pink-glow);
+      pointer-events: all;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      transition: all 0.25s ease;
+    }
+
+    .top-bar-reveal-handle:hover {
+      background: rgba(255, 0, 122, 0.25);
+      color: #fff;
+    }
+
+    .top-bar:hover .top-bar-reveal-handle,
+    .top-bar.revealed .top-bar-reveal-handle {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* ONLY LOGO - NO DUPLICATE TEXT */
+    .brand-logo-only {
+      height: 42px;
+      width: auto;
+      cursor: pointer;
+      filter: drop-shadow(0 0 14px rgba(255, 0, 122, 0.45));
+      transition: transform 0.2s;
+    }
+
+    .brand-logo-only:hover {
+      transform: scale(1.04);
+    }
+
+    /* CONTROLS CENTER */
+    .controls-center {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(13, 20, 42, 0.9);
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border-card);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    }
+
+    .mode-toggle {
+      display: flex;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 3px;
+      border-radius: 999px;
+      gap: 4px;
+    }
+
+    .mode-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: var(--font-main);
+      font-size: 0.86rem;
+      font-weight: 700;
+      padding: 7px 18px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .mode-btn.active {
+      background: var(--pink);
+      color: #fff;
+      box-shadow: 0 0 18px var(--pink-glow);
+    }
+
+    .playback-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-left: 1px solid rgba(255, 255, 255, 0.12);
+      padding-left: 12px;
+    }
+
+    .icon-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .icon-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: var(--pink);
+      transform: scale(1.08);
+    }
+
+    .slide-counter {
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+      min-width: 58px;
+      text-align: center;
+    }
+
+    .voiceover-toggle-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 13px;
+      border-radius: 20px;
+      border: 1px solid rgba(0, 230, 118, 0.45);
+      background: rgba(0, 230, 118, 0.12);
+      color: #86efac;
+      font-family: var(--font-main);
+      font-size: 0.83rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      margin-left: 6px;
+    }
+
+    .voiceover-toggle-btn:hover {
+      background: rgba(0, 230, 118, 0.25);
+      border-color: var(--green);
+      color: #fff;
+      box-shadow: 0 0 16px rgba(0, 230, 118, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .voiceover-toggle-btn.muted {
+      border-color: rgba(239, 68, 68, 0.4);
+      background: rgba(239, 68, 68, 0.12);
+      color: #fca5a5;
+    }
+
+    .voiceover-toggle-btn.muted:hover {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: #ef4444;
+      color: #fff;
+      box-shadow: 0 0 16px rgba(239, 68, 68, 0.4);
+    }
+
+    .voiceover-toggle-btn.playing {
+      box-shadow: 0 0 18px rgba(0, 230, 118, 0.5);
+      animation: voPulse 2s infinite ease-in-out;
+    }
+
+    @keyframes voPulse {
+      0%, 100% { border-color: rgba(0, 230, 118, 0.45); }
+      50% { border-color: var(--green); box-shadow: 0 0 22px rgba(0, 230, 118, 0.7); }
+    }
+
+    .voiceover-toggle-btn .vo-badge {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      background: rgba(255, 255, 255, 0.12);
+      padding: 1px 5px;
+      border-radius: 4px;
+      color: var(--text-dim);
+    }
+
+    /* RIGHT ACTIONS */
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .btn-deepdive-toggle {
+      background: linear-gradient(135deg, rgba(255, 0, 122, 0.2), rgba(139, 92, 246, 0.3));
+      border: 1px solid var(--border-frame);
+      color: #fff;
+      font-family: var(--font-main);
+      font-size: 0.88rem;
+      font-weight: 700;
+      padding: 9px 22px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.25s ease;
+      box-shadow: 0 0 18px rgba(255, 0, 122, 0.2);
+    }
+
+    .btn-deepdive-toggle:hover {
+      background: linear-gradient(135deg, rgba(255, 0, 122, 0.4), rgba(139, 92, 246, 0.5));
+      border-color: var(--pink);
+      box-shadow: 0 0 25px var(--pink-glow);
+      transform: translateY(-2px);
+    }
+
+    .badge-pulse {
+      width: 9px;
+      height: 9px;
+      background: var(--pink);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--pink);
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); opacity: 0.8; }
+      50% { transform: scale(1.4); opacity: 1; }
+      100% { transform: scale(0.95); opacity: 0.8; }
+    }
+
+    /* AUTOPLAY PROGRESS LINE */
+    .autoplay-progress-container {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.05);
+      z-index: 101;
+    }
+
+    .autoplay-progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--cyan), var(--pink));
+      box-shadow: 0 0 12px var(--pink);
+      transition: width 0.1s linear;
+    }
+
+    /* FULL VIEWPORT PRESENTATION FRAME */
+    .presentation-frame {
+      position: relative;
+      margin: 10px 24px;
+      height: calc(100vh - 20px);
+      border: 1px solid rgba(255, 0, 122, 0.35);
+      border-radius: 20px;
+      background: rgba(8, 13, 30, 0.65);
+      backdrop-filter: blur(12px);
+      box-shadow: 
+        0 20px 60px rgba(0, 0, 0, 0.85),
+        inset 0 0 30px rgba(255, 0, 122, 0.04),
+        0 0 30px rgba(0, 210, 255, 0.1);
+      overflow: hidden;
+    }
+
+    /* DECORATIVE TECH CORNERS */
+    .corner-marker {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-color: var(--pink);
+      pointer-events: none;
+      z-index: 10;
+    }
+    .corner-tl { top: -1px; left: -1px; border-top: 3px solid var(--pink); border-left: 3px solid var(--pink); border-top-left-radius: 20px; }
+    .corner-tr { top: -1px; right: -1px; border-top: 3px solid var(--pink); border-right: 3px solid var(--pink); border-top-right-radius: 20px; }
+    .corner-bl { bottom: -1px; left: -1px; border-bottom: 3px solid var(--pink); border-left: 3px solid var(--pink); border-bottom-left-radius: 20px; }
+    .corner-br { bottom: -1px; right: -1px; border-bottom: 3px solid var(--pink); border-right: 3px solid var(--pink); border-bottom-right-radius: 20px; }
+
+    /* SLIDES WRAPPER - FULL WIDTH */
+    .slides-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      padding: 40px 60px 75px 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transform: scale(0.97) translateY(20px);
+      transition: all 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+    }
+
+    .slide.active {
+      opacity: 1;
+      visibility: visible;
+      transform: scale(1) translateY(0);
+      pointer-events: all;
+    }
+
+    /* LARGER, IMPACTFUL TYPOGRAPHY */
+    .slide-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 18px;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 18px;
+      width: fit-content;
+      background: rgba(255, 0, 122, 0.15);
+      border: 1px solid rgba(255, 0, 122, 0.4);
+      color: #ff3399;
+      box-shadow: 0 0 16px rgba(255, 0, 122, 0.25);
+    }
+
+    .slide-tag.cyan {
+      background: rgba(0, 210, 255, 0.15);
+      border-color: rgba(0, 210, 255, 0.4);
+      color: var(--cyan);
+      box-shadow: 0 0 16px rgba(0, 210, 255, 0.25);
+    }
+
+    .slide-tag.green {
+      background: rgba(0, 230, 118, 0.15);
+      border-color: rgba(0, 230, 118, 0.4);
+      color: var(--green);
+      box-shadow: 0 0 16px rgba(0, 230, 118, 0.25);
+    }
+
+    .slide-title {
+      font-size: 3.6rem;
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -2px;
+      margin-bottom: 22px;
+      max-width: 1400px;
+    }
+
+    .gradient-text-pink {
+      background: linear-gradient(135deg, #ffffff 15%, #ff007a 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .gradient-text-cyan {
+      background: linear-gradient(135deg, #ffffff 15%, #00d2ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .slide-desc {
+      font-size: 1.45rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+      max-width: 1100px;
+      margin-bottom: 36px;
+      font-weight: 400;
+    }
+
+    /* FULL WIDTH CARDS GRID */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+      gap: 28px;
+      width: 100%;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 20px;
+      padding: 34px;
+      backdrop-filter: blur(16px);
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: transparent;
+      transition: all 0.35s;
+    }
+
+    .card:hover {
+      transform: translateY(-8px);
+      background: var(--bg-card-hover);
+      border-color: rgba(255, 255, 255, 0.25);
+      box-shadow: 0 25px 50px -15px rgba(0, 0, 0, 0.8);
+    }
+
+    .card.hover-pink:hover::before { background: var(--pink); box-shadow: 0 0 20px var(--pink); }
+    .card.hover-cyan:hover::before { background: var(--cyan); box-shadow: 0 0 20px var(--cyan); }
+    .card.hover-green:hover::before { background: var(--green); box-shadow: 0 0 20px var(--green); }
+
+    .card-icon {
+      width: 58px;
+      height: 58px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.85rem;
+      margin-bottom: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .card-title {
+      font-size: 1.65rem;
+      font-weight: 800;
+      margin-bottom: 14px;
+      letter-spacing: -0.5px;
+    }
+
+    .card-text {
+      font-size: 1.12rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 22px;
+    }
+
+    .card-metric {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 8px;
+      font-family: var(--font-mono);
+      font-size: 2rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .card-metric span {
+      font-size: 0.95rem;
+      font-family: var(--font-main);
+      color: var(--text-dim);
+      font-weight: 500;
+    }
+
+    /* ACTION CALLOUT IN SLIDE */
+    .slide-cta-row {
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      margin-top: 38px;
+    }
+
+    .btn-pill-primary {
+      background: linear-gradient(135deg, #ff007a, #e6006c);
+      color: #fff;
+      font-family: var(--font-main);
+      font-size: 1.1rem;
+      font-weight: 800;
+      padding: 16px 36px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 12px 30px -5px var(--pink-glow);
+      transition: all 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn-pill-primary:hover {
+      transform: translateY(-3px) scale(1.03);
+      box-shadow: 0 18px 40px -5px rgba(255, 0, 122, 0.65);
+    }
+
+    .btn-pill-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+      font-family: var(--font-main);
+      font-size: 1.05rem;
+      font-weight: 700;
+      padding: 16px 32px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-pill-secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    /* ========================================================
+       ADVANCED CANVAS WAREHOUSE SIMULATOR (SLIDE 4)
+       ======================================================== */
+    .sim-full-container {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 28px;
+      background: rgba(10, 16, 36, 0.95);
+      border: 1px solid var(--border-card);
+      border-radius: 22px;
+      padding: 24px;
+      width: 100%;
+      height: calc(100% - 150px);
+      min-height: 480px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8);
+    }
+
+    .canvas-wrapper-full {
+      position: relative;
+      background: #040711;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #warehouseCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .sim-sidebar {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .sim-status-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 12px;
+    }
+
+    .sim-status-title {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-dim);
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .sim-status-value {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--cyan);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sim-legend {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .legend-bullet {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+
+    .sim-btn-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .btn-sim {
+      padding: 15px 20px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-family: var(--font-main);
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.25s;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .btn-sim-trad {
+      background: rgba(239, 68, 68, 0.18);
+      border-color: rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+    }
+
+    .btn-sim-trad:hover, .btn-sim-trad.active {
+      background: rgba(239, 68, 68, 0.35);
+      border-color: #ef4444;
+      color: #fff;
+      box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+    }
+
+    .btn-sim-ai {
+      background: rgba(0, 230, 118, 0.18);
+      border-color: rgba(0, 230, 118, 0.45);
+      color: #86efac;
+    }
+
+    .btn-sim-ai:hover, .btn-sim-ai.active {
+      background: rgba(0, 230, 118, 0.35);
+      border-color: var(--green);
+      color: #fff;
+      box-shadow: 0 0 25px rgba(0, 230, 118, 0.4);
+    }
+
+    /* ROI CALCULATOR (SLIDE 8) */
+    .roi-calculator-box {
+      display: grid;
+      grid-template-columns: 1.15fr 1fr;
+      gap: 40px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 24px;
+      padding: 40px;
+      width: 100%;
+      backdrop-filter: blur(20px);
+    }
+
+    .roi-inputs {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+
+    .roi-slider-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .roi-slider-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+    }
+
+    .roi-slider-val {
+      font-family: var(--font-mono);
+      font-weight: 800;
+      color: #fff;
+      font-size: 1.3rem;
+    }
+
+    .roi-range {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 10px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.12);
+      outline: none;
+    }
+
+    .roi-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: var(--pink);
+      cursor: pointer;
+      box-shadow: 0 0 16px var(--pink);
+      transition: transform 0.1s;
+    }
+
+    .roi-range::-webkit-slider-thumb:hover {
+      transform: scale(1.2);
+    }
+
+    .roi-results-card {
+      background: linear-gradient(135deg, rgba(255, 0, 122, 0.14), rgba(0, 210, 255, 0.1));
+      border: 1px solid rgba(255, 0, 122, 0.4);
+      border-radius: 20px;
+      padding: 34px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .roi-kpi-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .roi-kpi-item:last-child {
+      border-bottom: none;
+    }
+
+    .roi-kpi-label {
+      color: var(--text-muted);
+      font-size: 1.05rem;
+    }
+
+    .roi-kpi-val {
+      font-family: var(--font-mono);
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .roi-kpi-val.highlight {
+      font-size: 2.3rem;
+      color: var(--green);
+      text-shadow: 0 0 25px rgba(0, 230, 118, 0.5);
+    }
+
+    /* ========================================================
+       DEEP DIVE MODAL OVERLAY (NO SPACE RESERVED ON SLIDE!)
+       ======================================================== */
+    .deepdive-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(3, 6, 16, 0.8);
+      backdrop-filter: blur(16px);
+      z-index: 500;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .deepdive-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .deepdive-modal {
+      width: 860px;
+      max-width: 92vw;
+      max-height: 86vh;
+      background: rgba(12, 18, 38, 0.98);
+      border: 1px solid rgba(255, 0, 122, 0.4);
+      border-radius: 24px;
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9), 0 0 40px rgba(255, 0, 122, 0.25);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transform: scale(0.95) translateY(20px);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .deepdive-overlay.open .deepdive-modal {
+      transform: scale(1) translateY(0);
+    }
+
+    .deepdive-header {
+      padding: 24px 34px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .deepdive-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--pink);
+    }
+
+    .deepdive-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #fff;
+      margin-top: 4px;
+    }
+
+    .btn-close-deepdive {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      transition: all 0.2s;
+    }
+
+    .btn-close-deepdive:hover {
+      background: var(--pink);
+      border-color: var(--pink);
+      transform: rotate(90deg);
+    }
+
+    .deepdive-content {
+      padding: 34px;
+      overflow-y: auto;
+      flex: 1;
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: #cbd5e1;
+    }
+
+    .deepdive-content::-webkit-scrollbar {
+      width: 8px;
+    }
+    .deepdive-content::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+
+    .deepdive-section {
+      margin-bottom: 32px;
+    }
+
+    .deepdive-section-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-left: 4px solid var(--pink);
+      padding-left: 12px;
+    }
+
+    .deepdive-list {
+      list-style: none;
+      padding-left: 4px;
+    }
+
+    .deepdive-list li {
+      position: relative;
+      padding-left: 24px;
+      margin-bottom: 12px;
+      color: #94a3b8;
+    }
+
+    .deepdive-list li::before {
+      content: '▹';
+      position: absolute;
+      left: 0;
+      color: var(--pink);
+      font-size: 1.2rem;
+    }
+
+    .deepdive-spec-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 14px;
+      font-size: 0.95rem;
+    }
+
+    .deepdive-spec-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .deepdive-spec-table td:first-child {
+      color: var(--text-dim);
+      font-weight: 600;
+      width: 42%;
+    }
+
+    .deepdive-spec-table td:last-child {
+      color: #fff;
+      font-family: var(--font-mono);
+    }
+
+    .deepdive-img-frame {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      margin: 18px 0;
+      background: rgba(0, 0, 0, 0.5);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    }
+
+    .deepdive-img-frame img {
+      width: 100%;
+      height: auto;
+      display: block;
+      object-fit: cover;
+    }
+
+    .deepdive-img-caption {
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      color: var(--cyan);
+      background: rgba(13, 20, 42, 0.95);
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      font-family: var(--font-mono);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .deepdive-grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 18px 0;
+    }
+
+    /* BOTTOM CONTROLS & DOTS */
+    .bottom-nav {
+      position: absolute;
+      bottom: 20px;
+      left: 50px;
+      right: 50px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    .slide-dots {
+      display: flex;
+      gap: 12px;
+      pointer-events: all;
+      background: rgba(13, 20, 42, 0.9);
+      padding: 10px 20px;
+      border-radius: 999px;
+      border: 1px solid var(--border-card);
+      backdrop-filter: blur(14px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.22);
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .dot:hover {
+      background: rgba(255, 255, 255, 0.6);
+      transform: scale(1.25);
+    }
+
+    .dot.active {
+      background: var(--pink);
+      width: 36px;
+      border-radius: 999px;
+      box-shadow: 0 0 16px var(--pink-glow);
+    }
+
+    .nav-arrows {
+      display: flex;
+      gap: 12px;
+      pointer-events: all;
+    }
+
+    .nav-arrow-btn {
+      background: rgba(13, 20, 42, 0.9);
+      border: 1px solid var(--border-card);
+      color: #fff;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(14px);
+      transition: all 0.25s;
+    }
+
+    .nav-arrow-btn:hover {
+      background: var(--pink);
+      border-color: var(--pink);
+      box-shadow: 0 0 25px var(--pink-glow);
+      transform: scale(1.08);
+    }
+
+    .keyboard-hint {
+      position: absolute;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.82rem;
+      color: var(--text-dim);
+      background: rgba(0, 0, 0, 0.6);
+      padding: 6px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .key-badge {
+      background: rgba(255, 255, 255, 0.12);
+      padding: 2px 7px;
+      border-radius: 5px;
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+    }
+
+    /* PROCESS FLOW TILES (SLIDE 6) */
+    .process-flow {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      width: 100%;
+      margin-bottom: 24px;
+    }
+
+    .process-step {
+      flex: 1;
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 18px;
+      padding: 28px 24px;
+      backdrop-filter: blur(14px);
+      transition: all 0.3s;
+    }
+
+    .process-step:hover {
+      border-color: var(--pink);
+      transform: translateY(-6px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .process-number {
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      font-weight: 800;
+      color: var(--pink);
+      margin-bottom: 10px;
+    }
+
+    .process-arrow {
+      color: var(--text-dim);
+      font-size: 1.6rem;
+    }
+
+    /* CLIENT LOGOS */
+    .client-logos-row {
+      display: flex;
+      align-items: center;
+      gap: 36px;
+      margin-top: 24px;
+      padding: 20px 30px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      width: 100%;
+      flex-wrap: wrap;
+      justify-content: space-around;
+    }
+
+    .client-logo-item {
+      height: 38px;
+      max-width: 150px;
+      object-fit: contain;
+      filter: grayscale(100%) brightness(2);
+      opacity: 0.8;
+      transition: all 0.3s;
+    }
+
+    .client-logo-item:hover {
+      filter: grayscale(0%) brightness(1);
+      opacity: 1;
+      transform: scale(1.1);
+    }
+
+    /* GRAPHIC SHOWCASE & TERMINAL MODULES (FROM PINQUARK PDFS) */
+    .showcase-mockup-frame {
+      background: rgba(0, 0, 0, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .showcase-mockup-frame:hover {
+      border-color: var(--cyan);
+      box-shadow: 0 20px 45px rgba(0, 210, 255, 0.25);
+      transform: translateY(-4px);
+    }
+
+    .showcase-mockup-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+
+    .showcase-mockup-frame:hover .showcase-mockup-img {
+      transform: scale(1.03);
+    }
+
+    .tab-pills-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .tab-pill-btn {
+      padding: 9px 22px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-muted);
+      font-family: var(--font-main);
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab-pill-btn.active {
+      background: linear-gradient(135deg, rgba(0, 210, 255, 0.25), rgba(255, 0, 122, 0.25));
+      border-color: var(--cyan);
+      color: #fff;
+      box-shadow: 0 0 18px rgba(0, 210, 255, 0.35);
+    }
+
+    .tab-content-panel {
+      display: none;
+      width: 100%;
+    }
+
+    .tab-content-panel.active {
+      display: block;
+      animation: fadeIn 0.35s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .terminal-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-card);
+      border-radius: 18px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.3s;
+    }
+
+    .terminal-card:hover {
+      border-color: var(--cyan);
+      transform: translateY(-4px);
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .terminal-thumb {
+      width: 100%;
+      height: 155px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: #000;
+    }
+
+    .terminal-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+
+    .terminal-card:hover .terminal-thumb img {
+      transform: scale(1.06);
+    }
+
+    .stat-badge-glow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      background: rgba(0, 230, 118, 0.15);
+      color: #86efac;
+      border: 1px solid rgba(0, 230, 118, 0.35);
+    }
+
+    .uwb-spec-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 16px 24px;
+      margin-top: 24px;
+    }
+
+    .uwb-spec-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .uwb-spec-label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-dim);
+      font-weight: 700;
+    }
+
+    .uwb-spec-val {
+      font-family: var(--font-mono);
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--cyan);
+    }
+
+    /* ========================================================
+       STAGGERED ENTRANCE ANIMATIONS (EYE-CATCHING CASCADE)
+       ======================================================== */
+    @keyframes heroEntrance {
+      0% {
+        opacity: 0;
+        transform: translateY(24px) scale(0.98);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .slide.active .slide-tag {
+      animation: heroEntrance 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.08s backwards;
+    }
+
+    .slide.active .slide-title {
+      animation: heroEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.22s backwards;
+    }
+
+    .slide.active .slide-desc {
+      animation: heroEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.36s backwards;
+    }
+
+    /* Staggered cards */
+    .slide.active .cards-grid > :nth-child(1) {
+      animation: heroEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.48s backwards;
+    }
+    .slide.active .cards-grid > :nth-child(2) {
+      animation: heroEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.62s backwards;
+    }
+    .slide.active .cards-grid > :nth-child(3) {
+      animation: heroEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.76s backwards;
+    }
+    .slide.active .cards-grid > :nth-child(4) {
+      animation: heroEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.90s backwards;
+    }
+
+    /* Canvas / Simulator stagger */
+    .slide.active .simulator-container,
+    .slide.active #simCanvas {
+      animation: heroEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.44s backwards;
+    }
+
+    /* Showcase 2-column layout */
+    .showcase-split-grid {
+      display: grid;
+      grid-template-columns: 1.12fr 1fr;
+      gap: 32px;
+      align-items: center;
+      width: 100%;
+    }
+
+    .slide.active .showcase-split-grid > :nth-child(1) {
+      animation: heroEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.44s backwards;
+    }
+    .slide.active .showcase-split-grid > :nth-child(2) {
+      animation: heroEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.60s backwards;
+    }
+
+    .showcase-hero-img-wrap {
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 0, 122, 0.35);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75), 0 0 30px rgba(255, 0, 122, 0.2);
+      background: rgba(0, 0, 0, 0.55);
+      height: 380px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .showcase-hero-img-wrap:hover {
+      border-color: var(--pink);
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85), 0 0 35px var(--pink-glow);
+    }
+
+    .showcase-hero-img-wrap img {
+      width: 100%;
+      height: 100%;
+      max-height: 360px;
+      object-fit: contain;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+
+    .showcase-hero-img-wrap:hover img {
+      transform: scale(1.03);
+    }
+
+    .floating-badge {
+      position: absolute;
+      padding: 7px 16px;
+      border-radius: 999px;
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+      z-index: 2;
+    }
+
+    .floating-badge.badge-top-left {
+      top: 16px;
+      left: 16px;
+      background: rgba(13, 20, 42, 0.92);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+      box-shadow: 0 0 16px rgba(0, 210, 255, 0.35);
+    }
+
+    .floating-badge.badge-bottom-right {
+      bottom: 16px;
+      right: 16px;
+      background: rgba(13, 20, 42, 0.92);
+      border: 1px solid var(--pink);
+      color: #fff;
+      box-shadow: 0 0 16px rgba(255, 0, 122, 0.4);
+    }
+
+    /* Staggered specs & processes */
+    .slide.active .uwb-spec-bar {
+      animation: heroEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.76s backwards;
+    }
+
+    .slide.active .tab-pills-row {
+      animation: heroEntrance 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.42s backwards;
+    }
+
+    .slide.active .process-flow > :nth-child(1) {
+      animation: heroEntrance 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.50s backwards;
+    }
+    .slide.active .process-flow > :nth-child(3) {
+      animation: heroEntrance 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.62s backwards;
+    }
+    .slide.active .process-flow > :nth-child(5) {
+      animation: heroEntrance 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.74s backwards;
+    }
+    .slide.active .process-flow > :nth-child(7) {
+      animation: heroEntrance 0.55s cubic-bezier(0.16, 1, 0.3, 1) 0.86s backwards;
+    }
+
+    .slide.active .slide-cta-row {
+      animation: heroEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.82s backwards;
+    }
+
+    .slide.active .client-logos-row {
+      animation: heroEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.85s backwards;
+    }
+
+    .slide.active .roi-calculator-box {
+      animation: heroEntrance 0.65s cubic-bezier(0.16, 1, 0.3, 1) 0.48s backwards;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- TOP HEADER -->
+  <header class="top-bar">
+    <!-- ONLY LOGO WITHOUT DUPLICATE TEXT -->
+    <div onclick="goToSlide(0)">
+      <img src="assets/logopin.png" alt="Pinquark Logo" class="brand-logo-only">
+    </div>
+
+    <!-- CENTER CONTROLS -->
+    <div class="controls-center">
+      <div class="mode-toggle">
+        <button class="mode-btn" id="btnModeAuto" onclick="setMode('auto')">
+          <span>🎬</span> Auto-Animacja
+        </button>
+        <button class="mode-btn active" id="btnModeManual" onclick="setMode('manual')">
+          <span>🎙️</span> Prezentacyjny
+        </button>
+      </div>
+
+      <div class="playback-controls">
+        <button class="icon-btn" id="btnPlayPause" onclick="togglePlayPause()" title="Play / Pauza (Spacja)">
+          <span id="playPauseIcon">▶</span>
+        </button>
+        <span class="slide-counter" id="slideCounter">01 / 10</span>
+
+        <button class="voiceover-toggle-btn" id="btnVoiceover" onclick="toggleVoiceover()" title="Włącz / Wycisz lektora (Klawisz M)">
+          <span id="voIcon">🔊</span>
+          <span id="voText">Lektor: WŁ</span>
+          <span class="vo-badge">M</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- RIGHT ACTION: DEEP DIVE & FULLSCREEN -->
+    <div class="top-actions">
+      <button class="btn-deepdive-toggle" onclick="toggleDeepDive()" title="Otwórz pełną specyfikację techniczną (Klawisz D)">
+        <div class="badge-pulse"></div>
+        <span>🔍 Pokaż szczegóły (Deep Dive)</span>
+        <span class="key-badge">D</span>
+      </button>
+
+      <button class="icon-btn" onclick="toggleFullscreen()" title="Pełny ekran (F11)">
+        <span>⛶</span>
+      </button>
+    </div>
+
+    <!-- PROGRESS LINE -->
+    <div class="autoplay-progress-container">
+      <div class="autoplay-progress-bar" id="autoplayProgress"></div>
+    </div>
+
+    <!-- RETRACTED HANDLE / TAB -->
+    <div class="top-bar-reveal-handle" id="topBarHandle" onclick="toggleTopBarManually()">
+      <span>▲ STEROWANIE & NAWIGACJA ▼</span>
+    </div>
+  </header>
+
+  <!-- FULL PRESENTATION FRAME -->
+  <div class="presentation-frame">
+    <div class="corner-marker corner-tl"></div>
+    <div class="corner-marker corner-tr"></div>
+    <div class="corner-marker corner-bl"></div>
+    <div class="corner-marker corner-br"></div>
+
+    <div class="slides-wrapper">
+
+      <!-- ================= SLIDE 1: HOOK / INTRO ================= -->
+      <section class="slide active" id="slide-0" data-title="Wprowadzenie">
+        <div class="slide-tag">Nowa Generacja Logistyki Magazynowej</div>
+        <h1 class="slide-title">
+          Bóg stworzył świat w 7 dni.<br>
+          Z nami stworzysz magazyn <span class="gradient-text-pink">w 24 godziny.</span>
+        </h1>
+        <p class="slide-desc">
+          Chmurowy system <strong>Pinquark WMS</strong> sterowany przez sztuczną inteligencję (AI) oraz czujniki Ultra-Wideband (UWB). Bez wielomiesięcznych wdrożeń. Bez zakupu serwerów.
+        </p>
+
+        <div class="cards-grid" style="grid-template-columns: repeat(3, 1fr);">
+          <div class="card hover-pink">
+            <div class="card-icon">⚡</div>
+            <h3 class="card-title">Start w 24h</h3>
+            <p class="card-text">Błyskawiczne uruchomienie dzięki funkcji drag & drop i gotowym szablonom procesów.</p>
+            <div class="card-metric">24h <span>wdrożenie</span></div>
+          </div>
+          <div class="card hover-cyan">
+            <div class="card-icon">🧠</div>
+            <h3 class="card-title">Silnik AI</h3>
+            <p class="card-text">Czynnościowe zarządzanie, dynamiczne wyznaczanie ścieżek i przewidywanie kolizji na żywo.</p>
+            <div class="card-metric">-25% <span>długości tras</span></div>
+          </div>
+          <div class="card hover-green">
+            <div class="card-icon">🏢</div>
+            <h3 class="card-title">Meritus S.A.</h3>
+            <p class="card-text">30+ lat doświadczenia na rynku IT i ponad 200 udanych wdrożeń w logistyce i przemyśle.</p>
+            <div class="card-metric">200+ <span>sukcesów</span></div>
+          </div>
+        </div>
+
+        <div class="slide-cta-row">
+          <button class="btn-pill-primary" onclick="nextSlide()">
+            Zobacz jak to działa <span>➔</span>
+          </button>
+          <button class="btn-pill-secondary" onclick="openDeepDive()">
+            Pełny profil spółki & technologii
+          </button>
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 2: TRZY FILARY ================= -->
+      <section class="slide" id="slide-1" data-title="3 Filary Platformy">
+        <div class="slide-tag cyan">Ekosystem Pinquark</div>
+        <h2 class="slide-title">
+          Trzy fundamenty <span class="gradient-text-cyan">inteligentnego magazynu</span>
+        </h2>
+        <p class="slide-desc">
+          Przebudowaliśmy logikę tradycyjnych systemów WMS. Zamiast sztywnych procedur – pełna elastyczność i chmura.
+        </p>
+
+        <div class="cards-grid">
+          <div class="card hover-pink">
+            <div class="card-icon">☁️</div>
+            <h3 class="card-title">1. STWÓRZ</h3>
+            <p class="card-text">Inteligentny magazyn w chmurze w 5 minut. Projektuj alejki, regały i strefy metodą <em>drag & drop</em> w przeglądarce.</p>
+            <ul class="deepdive-list" style="margin-top: 14px;">
+              <li>Zero infrastruktury serwerowej</li>
+              <li>Dostęp z dowolnego urządzenia</li>
+            </ul>
+          </div>
+          <div class="card hover-cyan">
+            <div class="card-icon">⚙️</div>
+            <h3 class="card-title">2. ZOPTYMALIZUJ</h3>
+            <p class="card-text">Maksymalne wykorzystanie kubatury magazynu i redukcja kosztów operacyjnych nawet o połowę dzięki sztucznej inteligencji.</p>
+            <ul class="deepdive-list" style="margin-top: 14px;">
+              <li>Redukcja kosztów do 50%</li>
+              <li>Wzrost wydajności o +25%</li>
+            </ul>
+          </div>
+          <div class="card hover-green">
+            <div class="card-icon">🚀</div>
+            <h3 class="card-title">3. NAPĘDZAJ</h3>
+            <p class="card-text">Skaluj biznes w modelu subskrypcyjnym (SaaS). Płać tylko za aktywnych użytkowników, bez barier wejścia i ukrytych opłat.</p>
+            <ul class="deepdive-list" style="margin-top: 14px;">
+              <li>Aplikacje mobilne PWA</li>
+              <li>Elastyczny model abonamentowy</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 3: LOW-CODE & PWA ================= -->
+      <section class="slide" id="slide-2" data-title="Kreator Low-Code & Mobilność">
+        <div class="slide-tag">Dostosowanie bez programistów</div>
+        <h2 class="slide-title">
+          Wizualny kreator <span class="gradient-text-pink">Low-Code & PWA</span>
+        </h2>
+        <p class="slide-desc">
+          Koniec z wielotygodniowym oczekiwaniem na zmiany w systemie. Każdy ekran i proces modyfikujesz bezpośrednio w aplikacji.
+        </p>
+
+        <div class="cards-grid" style="grid-template-columns: 1.15fr 1fr; align-items: stretch; gap: 28px;">
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="card hover-pink" style="padding: 26px;">
+              <h3 class="card-title" style="font-size: 1.45rem;">🎨 Kreator interfejsów na żywo (Low-Code)</h3>
+              <p class="card-text" style="font-size: 1.05rem; margin-bottom: 12px;">Dostosuj układ przycisków, pól skanowania EAN/SSCC i widoków dla magazynierów w kilka chwil. Tylko to, co niezbędne na danym stanowisku.</p>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <span class="stat-badge-glow">Drag & Drop</span>
+                <span class="stat-badge-glow">Wizualny edytor regałów</span>
+                <span class="stat-badge-glow">Zero kodowania</span>
+              </div>
+            </div>
+            
+            <div class="card hover-cyan" style="padding: 26px;">
+              <h3 class="card-title" style="font-size: 1.45rem;">📱 Standard PWA (Progressive Web App)</h3>
+              <p class="card-text" style="font-size: 1.05rem; margin-bottom: 12px;">Działa natychmiast na profesjonalnych kolektorach kodów (Zebra, Honeywell, Datalogic) oraz zwykłych smartfonach i tabletach wózkowych.</p>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <span class="stat-badge-glow">Android / iOS / Windows</span>
+                <span class="stat-badge-glow">Szybki start bez Google Play</span>
+                <span class="stat-badge-glow">Tryb offline</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-rows: 1fr 1fr; gap: 16px;">
+            <div class="showcase-mockup-frame" style="height: 190px;">
+              <img src="assets/showcase/mobile_terminal_pwa.png" alt="Aplikacja Mobilna Pinquark PWA" class="showcase-mockup-img" style="object-position: center top;">
+              <div style="position: absolute; bottom: 8px; left: 12px; background: rgba(0,0,0,0.75); padding: 4px 10px; border-radius: 6px; font-size: 0.78rem; font-family: var(--font-mono); color: var(--cyan); border: 1px solid rgba(0,210,255,0.3);">
+                📱 Mobilny interfejs kompletacji PWA (Kolektory Zebra/Honeywell)
+              </div>
+            </div>
+
+            <div class="showcase-mockup-frame" style="height: 190px;">
+              <img src="assets/showcase/ai_digital_map.jpg" alt="Cyfrowa mapa magazynu Pinquark" class="showcase-mockup-img" style="object-position: center;">
+              <div style="position: absolute; bottom: 8px; left: 12px; background: rgba(0,0,0,0.75); padding: 4px 10px; border-radius: 6px; font-size: 0.78rem; font-family: var(--font-mono); color: #86efac; border: 1px solid rgba(0,230,118,0.3);">
+                🗺️ Cyfrowa mapa magazynu — edytor stref i alejek
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 4: SYMULACJA AI (ULEPSZONA!) ================= -->
+      <section class="slide" id="slide-3" data-title="Symulator AI w Magazynie">
+        <div class="slide-tag green">Interaktywna Demonstracja AI & UWB</div>
+        <h2 class="slide-title" style="margin-bottom: 12px;">
+          AI w akcji: <span class="gradient-text-cyan">Omijanie przeszkód i antykolizja</span>
+        </h2>
+        <p class="slide-desc" style="margin-bottom: 20px;">
+          Ścieżki prowadzą <strong>wyłącznie korytarzami magazynowymi</strong>. Zobacz, jak algorytm AI omija zablokowane alejki i wózki widłowe.
+        </p>
+
+        <!-- FULL INTERACTIVE SIMULATOR -->
+        <div class="sim-full-container">
+          <div class="canvas-wrapper-full">
+            <canvas id="warehouseCanvas" width="860" height="460"></canvas>
+          </div>
+
+          <div class="sim-sidebar">
+            <div>
+              <div class="sim-status-box">
+                <div class="sim-status-title">Status Symulacji</div>
+                <div class="sim-status-value" id="simStatus">
+                  <span style="color: #86efac;">●</span> Gotowy do testu
+                </div>
+              </div>
+
+              <div class="sim-status-box">
+                <div class="sim-status-title">Długość trasy wózka</div>
+                <div class="sim-status-value" id="simDistance" style="font-family: var(--font-mono);">
+                  --- m
+                </div>
+                <div id="simDistSub" style="font-size: 0.8rem; color: var(--text-dim); margin-top: 4px;">Dystans pokonany wyłącznie korytarzami</div>
+              </div>
+
+              <div class="sim-status-box">
+                <div class="sim-status-title">Realny czas operacji (Zlecenie)</div>
+                <div class="sim-status-value" id="simTime" style="font-family: var(--font-mono);">
+                  -- min -- s
+                </div>
+                <div id="simTimeSub" style="font-size: 0.8rem; color: var(--text-dim); margin-top: 4px;">⚡ Przyspieszenie x20 dla demonstracji</div>
+              </div>
+
+              <div class="sim-status-box">
+                <div class="sim-status-title">Postęp zbiórki pozycji (P1 - P5)</div>
+                <div class="sim-status-value" id="simPicksCount" style="font-family: var(--font-mono); font-size: 1.15rem;">
+                  0 / 5 pozycji
+                </div>
+                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 8px; overflow: hidden;">
+                  <div id="simPickProgressBar" style="width: 0%; height: 100%; background: var(--green); transition: width 0.3s;"></div>
+                </div>
+              </div>
+
+              <div class="sim-legend">
+                <div class="legend-item">
+                  <div class="legend-bullet" style="background:#00e676;"></div>
+                  <span>Wózek kompletacyjny (Nasz wózek z UWB)</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-bullet" style="background:#ffb703;"></div>
+                  <span>Wózki widłowe w ruchu (2 pojazdy)</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-bullet" style="background:#ef4444;"></div>
+                  <span>Zator / Odstawiona paleta w alejce</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-bullet" style="background:#ff007a;"></div>
+                  <span>Punkty pobrań towaru (regały)</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-bullet" style="border: 1px dashed #eab308; background: rgba(234, 179, 8, 0.25);"></div>
+                  <span>Strefa skrajni BHP (bufor bezpieczeństwa od regałów)</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="sim-btn-group">
+              <button class="btn-sim btn-sim-trad" id="btnSimTrad" onclick="runSimulation('trad')">
+                <span>Tradycyjny (Chaos + Zator)</span>
+                <span>⚠️</span>
+              </button>
+              <button class="btn-sim btn-sim-ai" id="btnSimAI" onclick="runSimulation('ai')">
+                <span>Pinquark AI + UWB</span>
+                <span>⚡</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 5 (Index 4): PINQUARK NAVIGATOR ================= -->
+      <section class="slide" id="slide-4" data-title="Pinquark Navigator">
+        <div class="slide-tag cyan">Google Maps dla Hali Magazynowej</div>
+        <h2 class="slide-title">
+          Pinquark Navigator — <span class="gradient-text-pink">Nawigacja w Czasie Rzeczywistym</span>
+        </h2>
+        <p class="slide-desc" style="margin-bottom: 24px;">
+          Rewolucyjny moduł prowadzący magazynierów i wózki krok po kroku najszybszą i najbezpieczniejszą trasą pod właściwe gniazdo regałowe.
+        </p>
+
+        <div class="showcase-split-grid">
+          <!-- LEFT: 3 STRONG VALUE CARDS -->
+          <div style="display:flex; flex-direction:column; gap:16px;">
+            <div class="card hover-pink" style="padding: 22px 26px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h3 class="card-title" style="margin:0; font-size:1.3rem;">📍 Prowadzenie Krok po Kroku</h3>
+                <span class="stat-badge-glow">Nawigacja Turn-by-Turn</span>
+              </div>
+              <p class="card-text" style="font-size:0.92rem; margin:0;">Cyfrowa mapa hali 2D/3D ze wskazówkami skrętu i dynamicznym podświetleniem regału docelowego na ekranie terminala.</p>
+              <div class="card-metric" style="margin-top:10px; font-size:1.4rem;">100% <span>pewności adresu gniazda</span></div>
+            </div>
+
+            <div class="card hover-cyan" style="padding: 22px 26px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h3 class="card-title" style="margin:0; font-size:1.3rem;">⚡ Wdrożenie Pracownika w 0 min</h3>
+                <span class="stat-badge-glow">Zero Błądzenia</span>
+              </div>
+              <p class="card-text" style="font-size:0.92rem; margin:0;">Pracownicy tymczasowi i sezonowi realizują zadania od pierwszych minut bez konieczności mozolnej nauki topografii magazynu.</p>
+              <div class="card-metric" style="margin-top:10px; font-size:1.4rem;">0 min <span>czasu adaptacji nowego zespołu</span></div>
+            </div>
+
+            <div class="card hover-green" style="padding: 22px 26px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h3 class="card-title" style="margin:0; font-size:1.3rem;">🛡️ Radar Antykolizyjny BHP</h3>
+                <span class="stat-badge-glow">Alert Strefowy</span>
+              </div>
+              <p class="card-text" style="font-size:0.92rem; margin:0;">Zintegrowane ostrzeżenia świetlne i wibracyjne na terminalu przy zbliżeniu się wózka widłowego zza regału.</p>
+              <div class="card-metric" style="margin-top:10px; font-size:1.4rem;">-70% <span>ryzyka kolizji w korytarzach</span></div>
+            </div>
+          </div>
+
+          <!-- RIGHT: HD SHOWCASE DEVICE WITH FLOATING BADGES -->
+          <div class="showcase-hero-img-wrap">
+            <img src="assets/showcase/navigator_device_hand_hd.png" alt="Pinquark Navigator na terminalu Datalogic">
+            <div class="floating-badge badge-top-left">
+              <span>●</span> LIVE NAVIGATOR: MAPA HALI W CZASIE RZECZYWISTYM
+            </div>
+            <div class="floating-badge badge-bottom-right">
+              <span>⚡</span> -28% CZASU KOMPLETACJI ZLECEŃ
+            </div>
+          </div>
+        </div>
+
+        <div class="slide-cta-row" style="margin-top: 24px;">
+          <button class="btn-pill-primary" onclick="nextSlide()">
+            Zobacz sensorykę UWB <span>➔</span>
+          </button>
+          <button class="btn-pill-secondary" onclick="openDeepDive()">
+            Szczegóły modułu Navigator ➔
+          </button>
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 6 (Index 5): CZUJNIKI PINQUARK UWB ================= -->
+      <section class="slide" id="slide-5" data-title="Czujniki Pinquark UWB">
+        <div class="slide-tag">Dokładność &lt; 50 cm | Standard Przemysłowy</div>
+        <h2 class="slide-title">
+          Inteligentne Czujniki <span class="gradient-text-pink">Pinquark UWB</span>
+        </h2>
+        <p class="slide-desc" style="margin-bottom: 22px;">
+          Precyzyjny system lokalizacji czasu rzeczywistego (RTLS). Odporny na zakłócenia w stalowych halach wysokiego składu.
+        </p>
+
+        <div class="showcase-split-grid">
+          <!-- LEFT: HD HARDWARE STACK PHOTO -->
+          <div class="showcase-hero-img-wrap">
+            <img src="assets/showcase/uwb_sensors_hero_hd.png" alt="Czujniki Pinquark UWB: Tagi i Kotwice">
+            <div class="floating-badge badge-top-left">
+              <span>📡</span> HARDWARE UWB: UKŁADY DECAWAVE DWM1001C
+            </div>
+            <div class="floating-badge badge-bottom-right">
+              <span>🎯</span> PRECYZJA POMIARU &lt; 50 CM W HALI
+            </div>
+          </div>
+
+          <!-- RIGHT: 3 HARDWARE & ARCHITECTURE CARDS -->
+          <div style="display:flex; flex-direction:column; gap:16px;">
+            <div class="card hover-pink" style="padding: 22px 26px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h3 class="card-title" style="margin:0; font-size:1.3rem;">Odporność na Stal i Zakłócenia</h3>
+                <span class="stat-badge-glow">IEEE 802.15.4</span>
+              </div>
+              <p class="card-text" style="font-size:0.92rem; margin:0;">Impulsy radiowe Ultra-Wideband (3.5 – 6.5 GHz) przenikają przez metalowe regały bez zjawiska echa wielodrożnego, eliminując błędy GPS i Bluetooth.</p>
+              <div class="card-metric" style="margin-top:10px; font-size:1.4rem;">Zero <span>zakłóceń w halach regałowych</span></div>
+            </div>
+
+            <div class="card hover-cyan" style="padding: 22px 26px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h3 class="card-title" style="margin:0; font-size:1.3rem;">Asymetryczny Pomiar TOF 3D</h3>
+                <span class="stat-badge-glow">Trilateracja &lt;50 cm</span>
+              </div>
+              <p class="card-text" style="font-size:0.92rem; margin:0;">Pomiar czasu przelotu fali (Time of Flight) z multilateracją do 4 kotwic wyznacza pozycję obiektu w trzech wymiarach z centymetrową precyzją.</p>
+              <div class="card-metric" style="margin-top:10px; font-size:1.4rem;">&lt; 50 cm <span>dokładność przestrzenna</span></div>
+            </div>
+
+            <div class="card hover-green" style="padding: 22px 26px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h3 class="card-title" style="margin:0; font-size:1.3rem;">Cyfrowe Spaghetti & Heatmapy</h3>
+                <span class="stat-badge-glow">Live Analytics</span>
+              </div>
+              <p class="card-text" style="font-size:0.92rem; margin:0;">Generowanie map ciepła w czasie rzeczywistym. Pełna widoczność zatorów w korytarzach, przestojów i rzeczywistej roboczochłonności.</p>
+              <div class="card-metric" style="margin-top:10px; font-size:1.4rem;">100% <span>transparentności procesów</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- UWB TECHNICAL SPECIFICATION BAR -->
+        <div class="uwb-spec-bar">
+          <div class="uwb-spec-item">
+            <div class="uwb-spec-label">Tag Mobilny (DWM1001C)</div>
+            <div class="uwb-spec-val">37g | Bateria 3.6V</div>
+            <div style="font-size:0.75rem; color:var(--text-dim);">Akcelerometr 3D LIS2DH12, sleep &lt;15 µA</div>
+          </div>
+          <div class="uwb-spec-item">
+            <div class="uwb-spec-label">Kotwica Stacjonarna (Anchor)</div>
+            <div class="uwb-spec-val">16g | 5V USB / PoE</div>
+            <div style="font-size:0.75rem; color:var(--text-dim);">Siatka odniesienia 3D, zasięg 25-30m</div>
+          </div>
+          <div class="uwb-spec-item">
+            <div class="uwb-spec-label">Bramka Dostępowa (Gateway)</div>
+            <div class="uwb-spec-val">Raspberry Pi + PANS</div>
+            <div style="font-size:0.75rem; color:var(--text-dim);">Strumieniowanie MQTT / WebSocket do chmury</div>
+          </div>
+          <div class="uwb-spec-item">
+            <div class="uwb-spec-label">Certyfikacja Standardu</div>
+            <div class="uwb-spec-val">ETSI, FCC & ISED</div>
+            <div style="font-size:0.75rem; color:var(--text-dim);">Pełna zgodność przemysłowa CE</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 7 (Index 6): PINQUARK TERMINAL (YMS) ================= -->
+      <section class="slide" id="slide-6" data-title="Pinquark Terminal YMS">
+        <div class="slide-tag cyan">Yard Management System</div>
+        <h2 class="slide-title">
+          Pinquark Terminal — <span class="gradient-text-cyan">Zarządzanie Bramami i Placem</span>
+        </h2>
+        <p class="slide-desc" style="margin-bottom: 24px;">
+          Kompleksowa automatyzacja ruchu pojazdów ciężarowych. Kamery OCR, samoobsługowe info-kioski i inteligentna rezerwacja okien czasowych.
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 24px;">
+          <!-- CARD 1: BRAMY I OCR -->
+          <div class="terminal-card">
+            <div class="terminal-thumb">
+              <img src="assets/showcase/terminal_gates.png" alt="Moduł Bram Pinquark">
+            </div>
+            <h4 style="color:#fff; font-size:1.2rem; margin:0;">Zarządzanie Bramami & OCR</h4>
+            <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.5;">Kamery OCR do natychmiastowego odczytu tablic rejestracyjnych i numerów kontenerów, automatyczne wagi wjazd/wyjazd oraz sterowanie szlabanami.</p>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <span class="stat-badge-glow">Bramy & Szlabany</span>
+              <span class="stat-badge-glow">OCR Tablic w 0.2s</span>
+            </div>
+          </div>
+
+          <!-- CARD 2: KIOSKI KIEROWCY -->
+          <div class="terminal-card">
+            <div class="terminal-thumb">
+              <img src="assets/showcase/terminal_kiosk.png" alt="Samoobsługowe Info-Kioski">
+            </div>
+            <h4 style="color:#fff; font-size:1.2rem; margin:0;">Samoobsługowe Info-Kioski</h4>
+            <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.5;">Wielojęzyczny interfejs dla kierowców TIR (PL, EN, UA, DE). Odprawa w 30 sekund kodem QR z SMS-a i automatyczne przydzielenie wolnej rampy.</p>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <span class="stat-badge-glow">Self-service 30s</span>
+              <span class="stat-badge-glow">4 języki</span>
+            </div>
+          </div>
+
+          <!-- CARD 3: OKNA CZASOWE GANTT -->
+          <div class="terminal-card">
+            <div class="terminal-thumb">
+              <img src="assets/showcase/terminal_slots_gantt.png" alt="Okna czasowe Gantt">
+            </div>
+            <h4 style="color:#fff; font-size:1.2rem; margin:0;">Okna Czasowe & Wykres Gantta</h4>
+            <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.5;">Time Slot Booking dla przewoźników i spedytorów. Równomierne obciążenie ramp i magazynierów, całkowita eliminacja kolejek TIR przed bramą.</p>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <span class="stat-badge-glow">Wykres Gantta</span>
+              <span class="stat-badge-glow">Zero Kolejek TIR</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="padding: 16px 28px; display: flex; align-items: center; justify-content: space-between;">
+          <div>
+            <span style="color:var(--cyan); font-weight:800; font-size:1.05rem;">Zintegrowany Ekosystem Terminalowy:</span>
+            <span style="color:var(--text-muted); margin-left:10px; font-size:0.95rem;">Moduł Terminal YMS płynnie wymienia dane ze stanami magazynowymi WMS i systemami nadrzędnymi ERP w czasie rzeczywistym.</span>
+          </div>
+          <button class="btn-pill-secondary" onclick="openDeepDive()" style="padding: 8px 22px; font-size: 0.88rem;">
+            Szczegóły Terminal YMS ➔
+          </button>
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 8 (Index 7): PROCESY WMS & REST API ================= -->
+      <section class="slide" id="slide-7" data-title="Procesy WMS & API REST">
+        <div class="slide-tag">WMS End-to-End & Integracje ERP</div>
+        <h2 class="slide-title">
+          Architektura Procesów WMS & <span class="gradient-text-pink">Otwarte API REST</span>
+        </h2>
+        <p class="slide-desc" style="margin-bottom: 24px;">
+          Pełna kontrola nad każdym etapem łańcucha dostaw — od awizacji towaru po wydanie kurierskie i synchronizację z systemami ERP.
+        </p>
+
+        <!-- PROCESS FLOW TILES -->
+        <div class="process-flow">
+          <div class="process-step">
+            <div class="process-number">01. PRZYJĘCIE</div>
+            <h4 style="color:#fff; font-size:1.15rem; margin-bottom: 8px;">Awizacja & Rozładunek</h4>
+            <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.5;">Kontrola jakości, cross-docking, automatyczne generowanie etykiet logistycznych SSCC i weryfikacja braków/nadwyżek.</p>
+          </div>
+          <div class="process-arrow">➔</div>
+          <div class="process-step">
+            <div class="process-number">02. SKŁADOWANIE</div>
+            <h4 style="color:#fff; font-size:1.15rem; margin-bottom: 8px;">Dynamiczne Regały</h4>
+            <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.5;">Algorytmy rotacji towarów ABC/XYZ, dynamiczne komasowanie palet i inteligentna optymalizacja kubatury magazynu.</p>
+          </div>
+          <div class="process-arrow">➔</div>
+          <div class="process-step">
+            <div class="process-number">03. KOMPLETACJA</div>
+            <h4 style="color:#fff; font-size:1.15rem; margin-bottom: 8px;">Multi-Order Picking</h4>
+            <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.5;">Zbiórka wielu zamówień jednocześnie, algorytm plecakowy i najkrótsza ścieżka zbiórki wspierana przez Pinquark Navigator.</p>
+          </div>
+          <div class="process-arrow">➔</div>
+          <div class="process-step">
+            <div class="process-number">04. WYDANIE</div>
+            <h4 style="color:#fff; font-size:1.15rem; margin-bottom: 8px;">Pakowanie & Kurierzy</h4>
+            <p style="font-size:0.9rem; color:var(--text-muted); line-height:1.5;">Kontrola wagowa paczek, automatyczne generowanie listów przewozowych kurierów i załadunek na środki transportu.</p>
+          </div>
+        </div>
+
+        <!-- OPEN API CARD -->
+        <div class="card" style="padding: 20px 30px; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, rgba(0, 210, 255, 0.08), rgba(13, 20, 42, 0.9));">
+          <div>
+            <div style="color:var(--cyan); font-weight:800; font-size:1.15rem; margin-bottom:4px;">Otwarte API REST, Webhooks & Standard EDI</div>
+            <div style="color:var(--text-muted); font-size:0.95rem; line-height:1.5;">
+              Natywne konektory dla systemów ERP: <strong>SAP, Comarch ERP Optima/XL, Subiekt GT/Nexo, Enova365, Baselinker</strong> oraz platform e-commerce (Shopware, Magento, WooCommerce).
+            </div>
+          </div>
+          <button class="btn-pill-secondary" onclick="openDeepDive()" style="padding: 10px 24px; font-size: 0.92rem; white-space:nowrap; margin-left:20px;">
+            Dokumentacja API ➔
+          </button>
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 9 (Index 8): CASE STUDIES & KLIENCI ================= -->
+      <section class="slide" id="slide-8" data-title="Case Studies & Klienci">
+        <div class="slide-tag green">Sprawdzone w Praktyce</div>
+        <h2 class="slide-title">
+          Wyniki wdrożeń: <span class="gradient-text-pink">Fakty i Liczby</span>
+        </h2>
+        <p class="slide-desc" style="margin-bottom: 22px;">
+          Klienci Pinquark notują natychmiastowe przyspieszenie operacji logistycznych i terminalowych bez powiększania załogi.
+        </p>
+
+        <div class="cards-grid" style="grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 20px;">
+          <!-- CASE 1: H2 DYSTRYBUCJA -->
+          <div class="card hover-green" style="background: linear-gradient(135deg, rgba(0, 230, 118, 0.08), rgba(13, 20, 42, 0.95)); padding: 24px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <h3 class="card-title" style="color:#fff; margin:0; font-size:1.5rem;">H2 Dystrybucja</h3>
+              <span style="font-size:0.75rem; background:rgba(0,230,118,0.2); color:var(--green); padding:4px 12px; border-radius:999px; font-weight:800;">E-commerce & Hurt</span>
+            </div>
+            <p class="card-text" style="font-size:0.95rem; margin-bottom: 14px;">Wdrożenie WMS z algorytmem AI skróciło trasy kompletacji i obsłużyło rekordowy wzrost:</p>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+              <div style="background:rgba(0,0,0,0.35); padding:12px 14px; border-radius:12px;">
+                <div style="font-size:1.8rem; font-weight:900; color:var(--green); font-family:var(--font-mono);">+600</div>
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">zamówień dziennie</div>
+              </div>
+              <div style="background:rgba(0,0,0,0.35); padding:12px 14px; border-radius:12px;">
+                <div style="font-size:1.8rem; font-weight:900; color:var(--cyan); font-family:var(--font-mono);">-25%</div>
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">długość tras w alejkach</div>
+              </div>
+              <div style="background:rgba(0,0,0,0.35); padding:12px 14px; border-radius:12px;">
+                <div style="font-size:1.8rem; font-weight:900; color:#fff; font-family:var(--font-mono);">+20%</div>
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">szybsza realizacja wydań</div>
+              </div>
+              <div style="background:rgba(0,0,0,0.35); padding:12px 14px; border-radius:12px;">
+                <div style="font-size:1.8rem; font-weight:900; color:var(--pink); font-family:var(--font-mono);">0</div>
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">nowych etatów przy +40% wzroście</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CASE 2: LAUDE SMART INTERMODAL -->
+          <div class="card hover-cyan" style="background: linear-gradient(135deg, rgba(0, 210, 255, 0.08), rgba(13, 20, 42, 0.95)); padding: 24px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+              <h3 class="card-title" style="color:#fff; margin:0; font-size:1.5rem;">Laude Smart Intermodal</h3>
+              <span style="font-size:0.75rem; background:rgba(0,210,255,0.2); color:var(--cyan); padding:4px 12px; border-radius:999px; font-weight:800;">Centrum Logistyczne</span>
+            </div>
+            <p class="card-text" style="font-size:0.95rem; margin-bottom: 14px;">Automatyzacja terminala intermodalnego, bram, info-kiosków i nawigacji UWB na placu:</p>
+            
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+              <div style="background:rgba(0,0,0,0.35); padding:12px 14px; border-radius:12px;">
+                <div style="font-size:1.8rem; font-weight:900; color:var(--cyan); font-family:var(--font-mono);">&gt;1h ➔ 15 min</div>
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">czas TIR-a na placu (-75%)</div>
+              </div>
+              <div style="background:rgba(0,0,0,0.35); padding:12px 14px; border-radius:12px;">
+                <div style="font-size:1.8rem; font-weight:900; color:var(--green); font-family:var(--font-mono);">+35%</div>
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">efektywność załogi z UWB</div>
+              </div>
+              <div style="background:rgba(0,0,0,0.35); padding:12px 14px; border-radius:12px;">
+                <div style="font-size:1.8rem; font-weight:900; color:#fff; font-family:var(--font-mono);">+32%</div>
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">szybkość wydawania towaru</div>
+              </div>
+              <div style="background:rgba(0,0,0,0.35); padding:12px 14px; border-radius:12px;">
+                <div style="font-size:1.8rem; font-weight:900; color:var(--pink); font-family:var(--font-mono);">100%</div>
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">eliminacja dokumentów papierowych</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size:0.85rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:1.5px; margin-bottom:10px; font-weight:700;">Zaufali nam liderzy rynku logistycznego:</div>
+          <div class="client-logos-row" style="margin-top: 0; padding: 14px 24px;">
+            <img src="assets/vision-express-logo.png" alt="Vision Express" class="client-logo-item">
+            <img src="assets/h2dystybucja.png" alt="H2 Dystrybucja" class="client-logo-item">
+            <img src="assets/laude.png" alt="Laude" class="client-logo-item">
+            <img src="assets/CLIP-X-PINQUARK.png" alt="Clip Group" class="client-logo-item">
+            <img src="assets/GEM-logo.png" alt="GEM" class="client-logo-item">
+            <img src="assets/euro-eko-logo.png" alt="Euro Eko" class="client-logo-item">
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= SLIDE 10 (Index 9): KALKULATOR ROI & PODSUMOWANIE ================= -->
+      <section class="slide" id="slide-9" data-title="Kalkulator ROI & Cennik">
+        <div class="slide-tag">Przejrzysty Cennik & Natychmiastowy Zwrot</div>
+        <h2 class="slide-title">
+          Policz swój zwrot z inwestycji <span class="gradient-text-pink">(ROI)</span>
+        </h2>
+        <p class="slide-desc" style="margin-bottom: 20px;">
+          Stała, niska subskrypcja bez ukrytych kosztów: <strong>249 PLN netto / użytkownik / miesiąc</strong>.
+        </p>
+
+        <!-- OFFICIAL PINQUARK METRICS BANNER -->
+        <div style="margin-bottom: 20px; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255, 0, 122, 0.35); box-shadow: 0 10px 25px rgba(0,0,0,0.5); max-height: 84px; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;">
+          <img src="assets/showcase/banner_metrics.png" alt="Wskaźniki Pinquark: +25-40% wydajności, 0 pomyłek, ROI w 30 dni" style="width: 100%; height: 100%; object-fit: contain;">
+        </div>
+
+        <div class="roi-calculator-box">
+          <div class="roi-inputs">
+            <div class="roi-slider-group">
+              <div class="roi-slider-label">
+                <span>Liczba pracowników magazynu (kolektorów):</span>
+                <span class="roi-slider-val" id="valWorkers">10 osób</span>
+              </div>
+              <input type="range" min="2" max="60" value="10" class="roi-range" id="inputWorkers" oninput="updateROI()">
+            </div>
+
+            <div class="roi-slider-group">
+              <div class="roi-slider-label">
+                <span>Średni koszt pracownika (PLN brutto z narzutami):</span>
+                <span class="roi-slider-val" id="valSalary">6 000 zł</span>
+              </div>
+              <input type="range" min="4500" max="12000" step="500" value="6000" class="roi-range" id="inputSalary" oninput="updateROI()">
+            </div>
+
+            <div style="background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:14px; padding:18px;">
+              <div style="font-size:0.95rem; color:var(--text-muted); line-height:1.6;">
+                W cenie abonamentu <strong>249 PLN</strong> otrzymujesz: pełny system WMS, silnik AI, moduł Pinquark Navigator, symulator procesów, chmurę, kopie zapasowe oraz dedykowany Service Desk.
+              </div>
+            </div>
+          </div>
+
+          <div class="roi-results-card">
+            <div>
+              <div class="roi-kpi-item">
+                <span class="roi-kpi-label">Miesięczny koszt Pinquark:</span>
+                <span class="roi-kpi-val" id="resCost">2 490 zł</span>
+              </div>
+              <div class="roi-kpi-item">
+                <span class="roi-kpi-label">Zaoszczędzony czas pracy (-25% tras):</span>
+                <span class="roi-kpi-val" id="resHours" style="color:var(--cyan);">350 godz./mc</span>
+              </div>
+              <div class="roi-kpi-item">
+                <span class="roi-kpi-label">Wartość uwolnionego czasu:</span>
+                <span class="roi-kpi-val" id="resSavings">13 125 zł</span>
+              </div>
+              <div class="roi-kpi-item" style="border-top:1px dashed rgba(255,255,255,0.2); padding-top:16px; margin-top:12px;">
+                <span class="roi-kpi-label" style="font-weight:800; color:#fff;">Czysty zysk firmy (Miesięcznie):</span>
+                <span class="roi-kpi-val highlight" id="resNetROI">+10 635 zł</span>
+              </div>
+            </div>
+
+            <div style="margin-top:24px;">
+              <button class="btn-pill-primary" style="width:100%; justify-content:center;" onclick="openDeepDive()">
+                Umów bezpłatne 14-dniowe demo na magazynie ➔
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- BOTTOM NAVIGATION & PROGRESS -->
+    <footer class="bottom-nav">
+      <div class="slide-dots" id="slideDots"></div>
+
+      <div class="keyboard-hint">
+        Nawigacja: <span class="key-badge">←</span> <span class="key-badge">→</span> | Deep Dive: <span class="key-badge">D</span> | Pauza: <span class="key-badge">Spacja</span>
+      </div>
+
+      <div class="nav-arrows">
+        <button class="nav-arrow-btn" onclick="prevSlide()" title="Poprzedni slajd">◀</button>
+        <button class="nav-arrow-btn" onclick="nextSlide()" title="Następny slajd">▶</button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ========================================================
+       DEEP DIVE MODAL OVERLAY (CENTERED GLASS MODAL)
+       ======================================================== -->
+  <div class="deepdive-overlay" id="deepDiveOverlay" onclick="handleOverlayClick(event)">
+    <div class="deepdive-modal" id="deepDiveModal">
+      <div class="deepdive-header">
+        <div>
+          <div class="deepdive-badge">
+            <span>●</span> Poziom 2 — Pełna specyfikacja techniczna
+          </div>
+          <div class="deepdive-title" id="deepDiveHeaderTitle">Szczegóły Techniczne</div>
+        </div>
+        <button class="btn-close-deepdive" onclick="closeDeepDive()" title="Zamknij (Esc)">✕</button>
+      </div>
+
+      <div class="deepdive-content" id="deepDiveContent">
+        <!-- Injected via JavaScript -->
+      </div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // DEEP DIVE COMPLETE DATA (PRESERVING 100% ORIGINAL DOCUMENT CONTENT)
+    const deepDiveData = {
+      0: {
+        title: "Meritus S.A. & Architektura Pinquark",
+        html: `
+          <div class="deepdive-section">
+            <div class="deepdive-section-title">O Firmie Meritus S.A.</div>
+            <p>Meritus S.A. to polski software house z siedzibą w Poznaniu, działający na rynku zaawansowanych systemów IT dla logistyki i produkcji od ponad 30 lat. Spółka zrealizowała ponad 200 kompleksowych wdrożeń systemów klasy WMS, ERP i TMS w Polsce i Europie.</p>
+          </div>
+          <div class="deepdive-section">
+            <div class="deepdive-section-title">Kluczowe Przewagi Architektury Chmurowej</div>
+            <ul class="deepdive-list">
+              <li><strong>Zero CAPEX:</strong> Brak konieczności zakupu serwerów, macierzy dyskowych i licencji bazodanowych.</li>
+              <li><strong>Aktualizacje w tle:</strong> Wszystkie nowe funkcjonalności, modele AI i konektory API pojawiają się automatycznie bez przestojów hali.</li>
+              <li><strong>Bezpieczeństwo klasy bankowej:</strong> Centra danych ISO 27001, szyfrowanie TLS 1.3, backupy co 15 minut i replikacja multi-region.</li>
+            </ul>
+          </div>
+          <div class="deepdive-section">
+            <div class="deepdive-section-title">Pakiety Uruchomieniowe</div>
+            <table class="deepdive-spec-table">
+              <tr><td>Ekspresowy Start (24h):</td><td>Gotowy szablon e-commerce / hurtowni, import produktów z CSV/Excel, konfiguracja zdalna.</td></tr>
+              <tr><td>Standard (1-2 tyg.):</td><td>Dedykowana cyfrowa siatka hali, szkolenia zespołu, integracja z ERP i Baselinkerem.</td></tr>
+              <tr><td>Enterprise (3-4 tyg.):</td><td>Pełna integracja z ERP SAP / Comarch, sensoryka UWB, moduł bram Terminal YMS.</td></tr>
+            </table>
+          </div>
+        `
+      },
+      1: {
+        title: "3 Filary Platformy: Stwórz, Zoptymalizuj, Napędzaj",
+        html: `
+          <div class="deepdive-section">
+            <div class="deepdive-section-title">Filar 1: Stwórz Magazyn w 5 Minut</div>
+            <p>Wizualny edytor przestrzenny umożliwia narysowanie korytarzy, alejek, stref kompletacji, stref buforowych i doków przeładunkowych bezpośrednio w przeglądarce metodą drag & drop. System automatycznie generuje współrzędne gniazd regałowych i kody lokalizacyjne SSCC.</p>
+          </div>
+          <div class="deepdive-section">
+            <div class="deepdive-section-title">Filar 2: Zoptymalizuj z Silnikiem AI</div>
+            <ul class="deepdive-list">
+              <li>Dynamiczne wyznaczanie ścieżek zbiórki na podstawie wag, wymiarów i rotacji towarów (klasyfikacja ABC/XYZ).</li>
+              <li>Aktywne zarządzanie kolejkami zadań dla wózków widłowych — eliminacja pustych przebiegów do 40%.</li>
+              <li>Wykrywanie wąskich gardeł na podstawie analizy historycznej i prognozowania natężenia ruchu.</li>
+            </ul>
+          </div>
+          <div class="deepdive-section">
+            <div class="deepdive-section-title">Filar 3: Napędzaj Biznes w Modelu SaaS</div>
+            <table class="deepdive-spec-table">
+              <tr><td>Model licencyjny:</td><td>Miesięczna subskrypcja za aktywnego użytkownika (bez opłat za konta nieaktywne).</td></tr>
+              <tr><td>Dostępność (SLA):</td><td>Gwarantowane 99.9% w skali roku z całodobowym monitoringiem.</td></tr>
+              <tr><td>Wsparcie techniczne:</td><td>Dedykowany Service Desk, pomoc w konfiguracji i baza wiedzy online.</td></tr>
+            </table>
+          </div>
+        `
+      },
+      2: {
+        title: "Kreator Low-Code & Mobilność PWA",
+        html: `
+          <div class="deepdive-section">
+            <div class="deepdive-section-title">Kreator Procesów Magazynowych Low-Code</div>
+            <p>System wyposażono w intuicyjny silnik przepływów, w którym kierownik magazynu może samodzielnie definiować kroki procesu: wymóg skanowania numeru partii, ważenie paczki, potwierdzenie zdjęcia w przypadku uszkodzenia czy dynamiczne przekierowanie na pole buforowe.</p>
+          </div>
+          <div class="deepdive-section">
+            <div class="deepdive-section-title">Architektura Progressive Web App (PWA)</div>
+            <ul class="deepdive-list">
+              <li><strong>Kompatybilność sprzętowa:</strong> Działa natywnie na kolektorach Zebra (Android), Honeywell, Datalogic, Newland oraz smartfonach i tabletach.</li>
+              <li><strong>Natywna integracja ze skanerami kodów:</strong> Obsługa laserowych skanerów 1D/2D przez DataWedge oraz skanowanie kamerą urządzenia.</li>
+              <li><strong>Tryb Offline:</strong> W przypadku chwilowej utraty sygnału Wi-Fi w zakamarkach hali, terminal kolejkuje operacje w pamięci IndexedDB i synchronizuje je natychmiast po odzyskaniu łączności.</li>
+            </ul>
+          </div>
+        `
+      },
+      3: {
+        title: "Algorytmy AI: Graf Czasoprzestrzenny & Antykolizja",
+        html: `
+          <div class="deepdive-section">
+            <div class="deepdive-section-title">Algorytmika Optymalizacji Tras</div>
+            <p>Silnik planowania operuje na czasoprzestrzennym grafie magazynu. Każdy korytarz posiada określone parametry: szerokość, dopuszczalną prędkość, jednokierunkowość lub ruch dwukierunkowy z mijankami.</p>
+            <ul class="deepdive-list">
+              <li><strong>Optymalizacja TSP (Traveling Salesperson Problem):</strong> Algorytm łączy punkty zbiórki zamówienia w najkrótszą pętlę bez powracania do wcześniej odwiedzonych alejek.</li>
+              <li><strong>Algorytm A* w wymiarze czasowym:</strong> Równoczesne planowanie trajektorii wielu wózków widłowych z uwzględnieniem bezpiecznych odstępów czasowych na skrzyżowaniach.</li>
+              <li><strong>Dynamiczne unikanie przeszkód:</strong> W przypadku wykrycia zablokowanej alejki lub wózka w trakcie załadunku, system wyznacza trasę alternatywną w czasie rzeczywistym (&lt;100 ms).</li>
+            </ul>
+          </div>
+        `
+      },
+      4: {
+        title: "Pinquark Navigator — Wewnętrzny GPS dla Magazynu",
+        html: `
+          <div class="deepdive-section">
+            <div class="deepdive-section-title">Funkcjonalności Modułu Navigator</div>
+            <p>Pinquark Navigator to moduł wyświetlający cyfrową mapę hali magazynowej bezpośrednio na ekranie kolektora danych lub tabletu wózka widłowego, działający analogicznie do systemów nawigacji drogowej.</p>
+            <div class="deepdive-img-frame">
+              <img src="assets/showcase/navigator_device_hand_hd.png" alt="Interfejs Pinquark Navigator na terminalu Datalogic">
+              <div class="deepdive-img-caption">Widok nawigacji turn-by-turn na terminalu magazyniera z dynamicznym podświetleniem regału docelowego</div>
+            </div>
+            <ul class="deepdive-list">
+              <li><strong>Wizualizacja 2D/3D z rzutem gniazda:</strong> Prowadzenie magazyniera pod konkretną sekcję, półkę i poziom regału wysokiego składu.</li>
+              <li><strong>Skrócenie ścieżki zbiórki:</strong> Eliminacja niepotrzebnych kilometrów pokonywanych przez pracowników o średnio 28%.</li>
+              <li><strong>Ekspresowe wdrożenie pracowników sezonowych:</strong> Nowo zatrudniony pracownik nie potrzebuje przewodnika po hali — terminal sam prowadzi go do właściwych towarów.</li>
+              <li><strong>Ostrzeżenia strefowe BHP:</strong> Dźwiękowe i wizualne komunikaty ostrzegające o obecności innego pojazdu lub pieszego za załomem korytarza.</li>
+            </ul>
+          </div>
+        `
+      },
+      5: {
+        title: "Inteligentne Czujniki Pinquark UWB — Hardware & RTLS",
+        html: `
+          <div class="deepdive-section">
+            <div class="deepdive-section-title">Specyfikacja Sprzętowa Hardware UWB</div>
+            <p>System lokalizacji w czasie rzeczywistym (RTLS) Pinquark bazuje na układach Ultra-Wideband DecaWave DWM1001C, zapewniając centymetrową dokładność niedostępną dla technologii GPS, Bluetooth BLE czy Wi-Fi.</p>
+            <div class="deepdive-img-frame">
+              <img src="assets/showcase/uwb_sensors_hero_hd.png" alt="Hardware Pinquark UWB: Tagi i Kotwice">
+              <div class="deepdive-img-caption">Zestaw tagów noszonych przez magazynierów i montowanych na wózkach widłowych wraz ze stacjonarnymi kotwicami sufitowymi</div>
+            </div>
+            <table class="deepdive-spec-table">
+              <tr><td>Układ scalony UWB:</td><td>DecaWave DWM1001C (pasmo 3.5 GHz – 6.5 GHz, kanały 5 i 7)</td></tr>
+              <tr><td>Czujnik ruchu:</td><td>3-osiowy akcelerometr LIS2DH12 z funkcją wykrywania bezruchu</td></tr>
+              <tr><td>Zasilanie taga mobilnego:</td><td>Wymienna bateria litowa 3.6V (czas pracy do 2 lat w trybie uśpienia &lt;15 µA)</td></tr>
+              <tr><td>Kotwice referencyjne:</td><td>Zasilanie microUSB 5V / PoE, zasięg radiowy 25-30 m w hali</td></tr>
+              <tr><td>Bramka sieciowa (Gateway):</td><td>Raspberry Pi z biblioteką PANS, transmisja MQTT / WebSocket do chmury</td></tr>
+              <tr><td>Dokładność pozycjonowania:</td><td>Poniżej 50 cm w przestrzeni trójwymiarowej (XYZ)</td></tr>
+              <tr><td>Zgodność i certyfikacja:</td><td>ETSI EN 302 065-2, FCC Part 15F, ISED, dyrektywa CE RED</td></tr>
+            </table>
+          </div>
+          <div class="deepdive-section">
+            <div class="deepdive-section-title">Analityka Przestrzenna & Heatmapy</div>
+            <ul class="deepdive-list">
+              <li><strong>Mapy ciepła (Heatmaps):</strong> Identyfikacja wąskich gardeł, zatorów w alejkach i stref o najwyższej roboczochłonności.</li>
+              <li><strong>Cyfrowe spaghetti:</strong> Rejestracja i analiza rzeczywistych trajektorii wózków, porównanie z trasą teoretyczną i optymalizacja rozmieszczenia towarów.</li>
+            </ul>
+          </div>
+        `
+      },
+      6: {
+        title: "Pinquark Terminal (YMS) — Zarządzanie Bramami & Placem",
+        html: `
+          <div class="deepdive-section">
+            <div class="deepdive-section-title">Yard Management System (YMS)</div>
+            <p>Moduł Pinquark Terminal odpowiada za kompleksowe zarządzanie ruchem pojazdów ciężarowych od momentu awizacji, przez wjazd na teren zakładu, ważenie, podstawienie pod rampę, aż po wyjazd z magazynu.</p>
+            <div class="deepdive-grid-2">
+              <div class="deepdive-img-frame">
+                <img src="assets/showcase/terminal_gates.png" alt="Zarządzanie Bramami i OCR">
+                <div class="deepdive-img-caption">Kamery OCR i wagi automatyczne na bramie wjazdowej</div>
+              </div>
+              <div class="deepdive-img-frame">
+                <img src="assets/showcase/terminal_kiosk.png" alt="Samoobsługowe Info-Kioski dla Kierowców">
+                <div class="deepdive-img-caption">Samoobsługowy kiosk odprawy kierowcy TIR w 30 sekund</div>
+              </div>
+            </div>
+            <ul class="deepdive-list">
+              <li><strong>Automatyczny odczyt OCR:</strong> Błyskawiczne rozpoznawanie numerów tablic rejestracyjnych ciągnika, naczepy oraz kodów ISO kontenerów intermodalnych.</li>
+              <li><strong>Wielojęzyczne Info-Kioski:</strong> Kierowca skanuje kod QR otrzymany w SMS-ie awizacyjnym, potwierdza dane w języku polskim, angielskim, ukraińskim lub niemieckim i otrzymuje numer przydzielonej rampy.</li>
+              <li><strong>Time Slot Booking & Wykres Gantta:</strong> System awizacji okien czasowych z harmonogramem ramp, eliminujący kolejki przed bramą i zapewniający równomierne obciążenie magazynu.</li>
+            </ul>
+            <div class="deepdive-img-frame">
+              <img src="assets/showcase/terminal_slots_gantt.png" alt="Wykres Gantta Okien Czasowych">
+              <div class="deepdive-img-caption">Wykres Gantta dostępności ramp załadunkowych i rezerwacji slotów przewoźników</div>
+            </div>
+          </div>
+        `
+      },
+      7: {
+        title: "Architektura Procesów WMS & Integracja ERP (API REST)",
+        html: `
+          <div class="deepdive-section">
+            <div class="deepdive-section-title">End-to-End Procesy Logistyczne</div>
+            <ul class="deepdive-list">
+              <li><strong>Przyjęcie towaru (Inbound):</strong> Awizacje Pz, skanowanie kodów GS1-128, etykietowanie jednostek logistycznych SSCC, automatyczna obsługa cross-dockingu i rozbieżności dostaw.</li>
+              <li><strong>Zarządzanie składowaniem (Put-away):</strong> Dynamiczne wyznaczanie optymalnych lokalizacji na podstawie wagi, wymiarów i klasyfikacji rotacji ABC.</li>
+              <li><strong>Kompletacja (Picking):</strong> Obsługa metod Single-Order, Multi-Order Picking, Wave Picking oraz Batch Picking z sortowaniem do gniazd wysyłkowych.</li>
+              <li><strong>Kontrola i pakowanie (Packing):</strong> Weryfikacja wagowa paczek, automatyczny dobór kartonów (kartonizacja), generowanie listów przewozowych kurierów (DPD, DHL, InPost, GLS, UPS, FedEx).</li>
+            </ul>
+          </div>
+          <div class="deepdive-section">
+            <div class="deepdive-section-title">Otwarte API REST & Webhooks</div>
+            <table class="deepdive-spec-table">
+              <tr><td>Standard interfejsu:</td><td>RESTful API z autoryzacją OAuth 2.0 / API Key, format JSON</td></tr>
+              <tr><td>Powiadomienia na żywo:</td><td>Webhooks dla zdarzeń: zmiana stanu zamówienia, przyjęcie partii, braki towarowe</td></tr>
+              <tr><td>Wspierane ERP:</td><td>SAP S/4HANA & ECC, Comarch ERP Optima & XL, Subiekt GT & Nexo, Enova365, Navireo</td></tr>
+              <tr><td>Integratory E-commerce:</td><td>Baselinker, Shopware, Magento 2, PrestaShop, WooCommerce, Amazon, Allegro</td></tr>
+            </table>
+          </div>
+        `
+      },
+      8: {
+        title: "Raporty Wdrożeniowe: Case Studies & Klienci",
+        html: `
+          <div class="deepdive-section">
+            <div class="deepdive-section-title">Studium Przypadku: H2 Dystrybucja</div>
+            <p>Jeden z wiodących dystrybutorów artykułów szkolnych, biurowych i zabawek w Polsce. Przed wdrożeniem firma borykała się z wydłużonym czasem zbiórki w szczytach sezonowych (sierpień-wrzesień) i błędem kompletacji sięgającym 1.8%.</p>
+            <table class="deepdive-spec-table">
+              <tr><td>Wzrost wolumenu zamówień:</td><td>+600 zamówień dziennie (+40% r/r)</td></tr>
+              <tr><td>Redukcja długości tras kompletacji:</td><td>-25% średniego dystansu pieszego magazyniera</td></tr>
+              <tr><td>Przyspieszenie realizacji wydań:</td><td>+20% więcej skompletowanych pozycji na godzinę</td></tr>
+              <tr><td>Potrzeby kadrowe:</td><td>0 nowych etatów w magazynie przy 40-procentowym wzroście sprzedaży</td></tr>
+            </table>
+          </div>
+          <div class="deepdive-section">
+            <div class="deepdive-section-title">Studium Przypadku: Laude Smart Intermodal</div>
+            <p>Nowoczesne centrum logistyczne i terminal intermodalny obsługujący pociągi kontenerowe i setki samochodów ciężarowych dziennie.</p>
+            <table class="deepdive-spec-table">
+              <tr><td>Czas przebywania TIR na terminalu:</td><td>Skrócony z &gt;60 minut do zaledwie 15 minut (-75%)</td></tr>
+              <tr><td>Efektywność załogi z sensorami UWB:</td><td>+35% wzrost liczby przeładunków kontenerów na zmianę</td></tr>
+              <tr><td>Czas wydania towaru z magazynu:</td><td>+32% szybsza odprawa dzięki samoobsługowym info-kioskom</td></tr>
+              <tr><td>Cyfryzacja dokumentacji:</td><td>100% eliminacji papierowych dokumentów przewozowych i wz</td></tr>
+            </table>
+          </div>
+        `
+      },
+      9: {
+        title: "Model Finansowy TCO & Kalkulator Zwrotu z Inwestycji (ROI)",
+        html: `
+          <div class="deepdive-section">
+            <div class="deepdive-section-title">Porównanie Kosztów TCO (Total Cost of Ownership)</div>
+            <table class="deepdive-spec-table">
+              <tr><td>Tradycyjny system WMS (On-Premise):</td><td>Wysoki koszt wejścia: 100 000 – 350 000 zł (serwery, licencje baz danych, wdrożenie), płatny support 18-22% rocznie, płatne aktualizacje.</td></tr>
+              <tr><td>Chmurowy Pinquark WMS (SaaS):</td><td>Stała subskrypcja 249 zł netto/użytkownik/mc. Zero kosztów serwerów, darmowe aktualizacje, darmowy Service Desk.</td></tr>
+            </table>
+          </div>
+          <div class="deepdive-section">
+            <div class="deepdive-section-title">Metodologia Obliczeń Kalkulatora ROI</div>
+            <ul class="deepdive-list">
+              <li><strong>Oszczędność czasu tras (-25%):</strong> Magazynier spędza średnio 60% czasu pracy na przemieszczaniu się. Redukcja tras o 25% uwalnia ok. 25 roboczogodzin miesięcznie na każdego pracownika.</li>
+              <li><strong>Eliminacja błędów kompletacji:</strong> Redukcja błędów z 1.5% do 0.05% generuje dodatkowe oszczędności na kosztach ponownych wysyłek i reklamacji.</li>
+              <li><strong>Średni czas zwrotu (Payback Period):</strong> 30 dni od momentu uruchomienia systemu na magazynie.</li>
+            </ul>
+          </div>
+        `
+      }
+    };
+
+    // STATE
+    let currentSlide = 0;
+    const totalSlides = 10;
+    let presentationMode = 'manual'; // 'auto' | 'manual'
+    let isPlaying = false;
+    let autoplayTimer = null;
+    let autoplayStartTime = null;
+    let autoplayElapsed = 0;
+    let audioEndedTimeout = null;
+    const SLIDE_DURATION = 15000; // fallback duration if voiceover is muted
+    let progressAnimFrame = null;
+
+    // VOICEOVER (LEKTOR) SYSTEM
+    const slideAudios = [
+      'assets/audio/slide_1.mp3',
+      'assets/audio/slide_2.mp3',
+      'assets/audio/slide_3.mp3',
+      'assets/audio/slide_4.mp3',
+      'assets/audio/slide_5.mp3',
+      'assets/audio/slide_6.mp3',
+      'assets/audio/slide_7.mp3',
+      'assets/audio/slide_8.mp3',
+      'assets/audio/slide_9.mp3',
+      'assets/audio/slide_10.mp3'
+    ];
+
+    let currentAudio = null;
+    let voiceoverEnabled = true;
+    let voAudioContextUnlocked = false;
+
+    // INIT
+    window.addEventListener('DOMContentLoaded', () => {
+      createDots();
+      showSlide(0);
+      initKeyboardControls();
+      updateROI();
+      initCanvas();
+    });
+
+    // Unlock audio context on user's first click
+    window.addEventListener('click', () => {
+      if (!voAudioContextUnlocked) {
+        voAudioContextUnlocked = true;
+        if (voiceoverEnabled && (!currentAudio || currentAudio.paused)) {
+          playSlideVoiceover(currentSlide);
+        }
+      }
+    }, { once: true });
+
+    function playSlideVoiceover(index) {
+      stopVoiceover();
+
+      if (!voiceoverEnabled) {
+        updateVoiceoverUI();
+        return;
+      }
+
+      const audioSrc = slideAudios[index];
+      if (!audioSrc) return;
+
+      const audio = new Audio(audioSrc);
+      currentAudio = audio;
+
+      const btn = document.getElementById('btnVoiceover');
+      if (btn) btn.classList.add('playing');
+
+      audio.onended = () => {
+        if (btn) btn.classList.remove('playing');
+        // In Auto-Animacja mode, proceed to next slide after a natural 1.2s pause
+        if (presentationMode === 'auto' && isPlaying) {
+          audioEndedTimeout = setTimeout(() => {
+            if (presentationMode === 'auto' && isPlaying && currentSlide === index) {
+              nextSlide();
+            }
+          }, 1200);
+        }
+      };
+
+      audio.onpause = () => {
+        if (btn) btn.classList.remove('playing');
+      };
+
+      audio.onplay = () => {
+        if (btn && voiceoverEnabled) btn.classList.add('playing');
+      };
+
+      // Progress bar sync with audio in auto mode
+      audio.ontimeupdate = () => {
+        if (presentationMode === 'auto' && isPlaying && audio.duration) {
+          const pct = Math.min(100, (audio.currentTime / audio.duration) * 100);
+          const bar = document.getElementById('autoplayProgress');
+          if (bar) bar.style.width = pct + '%';
+        }
+      };
+
+      audio.onerror = () => {
+        console.warn(`Lektor dla slajdu ${index + 1} (${audioSrc}) oczekuje na plik audio. Uruchamiam płynny fallback z zegarem.`);
+        if (btn) btn.classList.remove('playing');
+        currentAudio = null;
+        if (presentationMode === 'auto' && isPlaying) {
+          resetAutoplayProgress();
+        }
+      };
+
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(err => {
+          console.warn('Voiceover playback waiting for user click:', err);
+          if (btn) btn.classList.remove('playing');
+        });
+      }
+    }
+
+    function stopVoiceover() {
+      if (audioEndedTimeout) {
+        clearTimeout(audioEndedTimeout);
+        audioEndedTimeout = null;
+      }
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
+      const btn = document.getElementById('btnVoiceover');
+      if (btn) btn.classList.remove('playing');
+    }
+
+    function toggleVoiceover() {
+      voiceoverEnabled = !voiceoverEnabled;
+      updateVoiceoverUI();
+
+      if (voiceoverEnabled) {
+        playSlideVoiceover(currentSlide);
+      } else {
+        stopVoiceover();
+      }
+    }
+
+    function updateVoiceoverUI() {
+      const btn = document.getElementById('btnVoiceover');
+      const icon = document.getElementById('voIcon');
+      const text = document.getElementById('voText');
+      if (!btn || !icon || !text) return;
+
+      if (voiceoverEnabled) {
+        btn.classList.remove('muted');
+        icon.innerText = '🔊';
+        text.innerText = 'Lektor: WŁ';
+      } else {
+        btn.classList.add('muted');
+        btn.classList.remove('playing');
+        icon.innerText = '🔇';
+        text.innerText = 'Lektor: WYŁ';
+      }
+    }
+
+    function createDots() {
+      const container = document.getElementById('slideDots');
+      container.innerHTML = '';
+      for (let i = 0; i < totalSlides; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'dot' + (i === 0 ? ' active' : '');
+        dot.title = `Przejdź do: ${document.getElementById(`slide-${i}`)?.dataset.title || `Slajd ${i+1}`}`;
+        dot.onclick = () => goToSlide(i);
+        container.appendChild(dot);
+      }
+    }
+
+    function updateDots() {
+      const dots = document.querySelectorAll('.dot');
+      dots.forEach((dot, idx) => {
+        dot.classList.toggle('active', idx === currentSlide);
+      });
+      document.getElementById('slideCounter').innerText = `${String(currentSlide + 1).padStart(2, '0')} / ${String(totalSlides).padStart(2, '0')}`;
+    }
+
+    function showSlide(index) {
+      if (index < 0) index = 0;
+      if (index >= totalSlides) index = totalSlides - 1;
+
+      const slides = document.querySelectorAll('.slide');
+      slides.forEach((s, idx) => {
+        s.classList.toggle('active', idx === index);
+      });
+
+      currentSlide = index;
+      autoplayElapsed = 0;
+      updateDots();
+      updateDeepDiveContent();
+
+      // Play voiceover for this slide
+      playSlideVoiceover(currentSlide);
+
+      // Trigger slide behavior
+      if (currentSlide === 3) {
+        if (presentationMode === 'auto' && isPlaying) {
+          setTimeout(() => runSimulation('ai'), 800);
+        } else {
+          drawWarehouseGrid();
+        }
+      }
+
+      if (presentationMode === 'auto' && isPlaying) {
+        resetAutoplayProgress();
+      }
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides - 1) {
+        showSlide(currentSlide + 1);
+      } else if (presentationMode === 'auto') {
+        showSlide(0); // loop
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 0) {
+        showSlide(currentSlide - 1);
+      }
+    }
+
+    function goToSlide(index) {
+      showSlide(index);
+    }
+
+    // PROCESS TAB SWITCHING (WMS VS TERMINAL YMS)
+    function switchProcessTab(tab) {
+      const btnWMS = document.getElementById('tabBtnWMS');
+      const btnTerminal = document.getElementById('tabBtnTerminal');
+      const panelWMS = document.getElementById('tabPanelWMS');
+      const panelTerminal = document.getElementById('tabPanelTerminal');
+      if (!btnWMS || !btnTerminal || !panelWMS || !panelTerminal) return;
+
+      if (tab === 'wms') {
+        btnWMS.classList.add('active');
+        btnTerminal.classList.remove('active');
+        panelWMS.classList.add('active');
+        panelTerminal.classList.remove('active');
+      } else {
+        btnWMS.classList.remove('active');
+        btnTerminal.classList.add('active');
+        panelWMS.classList.remove('active');
+        panelTerminal.classList.add('active');
+      }
+    }
+
+    // MODE HANDLING
+    function setMode(mode) {
+      presentationMode = mode;
+      document.getElementById('btnModeAuto').classList.toggle('active', mode === 'auto');
+      document.getElementById('btnModeManual').classList.toggle('active', mode === 'manual');
+
+      if (mode === 'auto') {
+        startAutoplay();
+      } else {
+        pauseAutoplay();
+        resetAutoplayProgress();
+      }
+    }
+
+    function togglePlayPause() {
+      if (isPlaying) {
+        pauseAutoplay();
+      } else {
+        if (presentationMode !== 'auto') {
+          setMode('auto');
+        } else {
+          startAutoplay();
+        }
+      }
+    }
+
+    function startAutoplay(resume = false) {
+      isPlaying = true;
+      document.getElementById('playPauseIcon').innerText = '⏸';
+      if (voiceoverEnabled && currentAudio && currentAudio.paused && !currentAudio.ended) {
+        const playPromise = currentAudio.play();
+        if (playPromise !== undefined) playPromise.catch(() => {});
+        const btn = document.getElementById('btnVoiceover');
+        if (btn) btn.classList.add('playing');
+      } else if (voiceoverEnabled && !currentAudio) {
+        playSlideVoiceover(currentSlide);
+      }
+      if (resume) {
+        resumeAutoplayProgress();
+      } else {
+        resetAutoplayProgress();
+      }
+    }
+
+    function pauseAutoplay() {
+      isPlaying = false;
+      document.getElementById('playPauseIcon').innerText = '▶';
+      if (autoplayTimer) clearTimeout(autoplayTimer);
+      if (audioEndedTimeout) {
+        clearTimeout(audioEndedTimeout);
+        audioEndedTimeout = null;
+      }
+      if (progressAnimFrame) cancelAnimationFrame(progressAnimFrame);
+      if (currentAudio && !currentAudio.paused) {
+        currentAudio.pause();
+        const btn = document.getElementById('btnVoiceover');
+        if (btn) btn.classList.remove('playing');
+      }
+      if (autoplayStartTime) {
+        autoplayElapsed += (Date.now() - autoplayStartTime);
+      }
+    }
+
+    function resetAutoplayProgress() {
+      if (autoplayTimer) clearTimeout(autoplayTimer);
+      if (progressAnimFrame) cancelAnimationFrame(progressAnimFrame);
+
+      const bar = document.getElementById('autoplayProgress');
+      if (bar) bar.style.width = '0%';
+      autoplayStartTime = Date.now();
+      autoplayElapsed = 0;
+
+      // If voiceover is enabled, audio progress takes precedence
+      if (voiceoverEnabled && currentAudio) {
+        return;
+      }
+
+      function updateProgress() {
+        if (!isPlaying) return;
+        const elapsed = Date.now() - autoplayStartTime;
+        const pct = Math.min(100, (elapsed / SLIDE_DURATION) * 100);
+        if (bar) bar.style.width = pct + '%';
+
+        if (elapsed < SLIDE_DURATION) {
+          progressAnimFrame = requestAnimationFrame(updateProgress);
+        } else {
+          nextSlide();
+        }
+      }
+
+      progressAnimFrame = requestAnimationFrame(updateProgress);
+    }
+
+    function resumeAutoplayProgress() {
+      if (autoplayTimer) clearTimeout(autoplayTimer);
+      if (progressAnimFrame) cancelAnimationFrame(progressAnimFrame);
+
+      // If voiceover is enabled, audio progress takes precedence
+      if (voiceoverEnabled && currentAudio) {
+        return;
+      }
+
+      const bar = document.getElementById('autoplayProgress');
+      autoplayStartTime = Date.now();
+
+      function updateProgress() {
+        if (!isPlaying) return;
+        const totalElapsed = autoplayElapsed + (Date.now() - autoplayStartTime);
+        const pct = Math.min(100, (totalElapsed / SLIDE_DURATION) * 100);
+        if (bar) bar.style.width = pct + '%';
+
+        if (totalElapsed < SLIDE_DURATION) {
+          progressAnimFrame = requestAnimationFrame(updateProgress);
+        } else {
+          nextSlide();
+        }
+      }
+
+      progressAnimFrame = requestAnimationFrame(updateProgress);
+    }
+
+    // KEYBOARD NAVIGATION
+    function initKeyboardControls() {
+      window.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight' || e.key === 'PageDown') {
+          nextSlide();
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+          prevSlide();
+        } else if (e.key === ' ') {
+          e.preventDefault();
+          togglePlayPause();
+        } else if (e.key === 'm' || e.key === 'M') {
+          toggleVoiceover();
+        } else if (e.key === 'd' || e.key === 'D') {
+          toggleDeepDive();
+        } else if (e.key === 'Escape') {
+          closeDeepDive();
+        }
+      });
+    }
+
+    function toggleFullscreen() {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    // DEEP DIVE OVERLAY MODAL (PAUSE / RESUME NARRATION & ANIMATION)
+    let wasPlayingBeforeDeepDive = false;
+    let wasAudioPlayingBeforeDeepDive = false;
+
+    function toggleDeepDive() {
+      const overlay = document.getElementById('deepDiveOverlay');
+      if (overlay.classList.contains('open')) {
+        closeDeepDive();
+      } else {
+        openDeepDive();
+      }
+    }
+
+    function openDeepDive() {
+      // 1. Remember state before pausing
+      wasPlayingBeforeDeepDive = (presentationMode === 'auto' && isPlaying);
+      wasAudioPlayingBeforeDeepDive = (currentAudio && !currentAudio.paused && !currentAudio.ended);
+
+      // 2. Pause audio if it was speaking
+      if (currentAudio && !currentAudio.paused) {
+        currentAudio.pause();
+        const btn = document.getElementById('btnVoiceover');
+        if (btn) btn.classList.remove('playing');
+      }
+
+      // 3. Pause auto-animation if active
+      if (isPlaying) {
+        pauseAutoplay();
+      }
+
+      // 4. Update modal content and show overlay
+      updateDeepDiveContent();
+      document.getElementById('deepDiveOverlay').classList.add('open');
+    }
+
+    function closeDeepDive() {
+      const overlay = document.getElementById('deepDiveOverlay');
+      if (!overlay || !overlay.classList.contains('open')) return;
+      overlay.classList.remove('open');
+
+      // 1. Resume voiceover if it was speaking before opening the modal
+      if (wasAudioPlayingBeforeDeepDive && voiceoverEnabled && currentAudio && !currentAudio.ended) {
+        const playPromise = currentAudio.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(err => {
+            console.warn('Lektor resume playback interrupted:', err);
+          });
+        }
+        const btn = document.getElementById('btnVoiceover');
+        if (btn) btn.classList.add('playing');
+      }
+
+      // 2. Resume auto-animation if it was active before opening the modal
+      if (wasPlayingBeforeDeepDive) {
+        if (currentAudio && currentAudio.ended) {
+          // If the narration already completed before opening the modal, proceed after short natural pause
+          isPlaying = true;
+          document.getElementById('playPauseIcon').innerText = '⏸';
+          audioEndedTimeout = setTimeout(() => {
+            if (presentationMode === 'auto' && isPlaying) {
+              nextSlide();
+            }
+          }, 1000);
+        } else {
+          startAutoplay(true);
+        }
+      }
+
+      // 3. Reset state flags
+      wasPlayingBeforeDeepDive = false;
+      wasAudioPlayingBeforeDeepDive = false;
+    }
+
+    function handleOverlayClick(e) {
+      if (e.target.id === 'deepDiveOverlay') {
+        closeDeepDive();
+      }
+    }
+
+    function updateDeepDiveContent() {
+      const data = deepDiveData[currentSlide] || deepDiveData[0];
+      document.getElementById('deepDiveHeaderTitle').innerText = data.title;
+      document.getElementById('deepDiveContent').innerHTML = data.html;
+    }
+
+    // ROI CALCULATOR LOGIC
+    function updateROI() {
+      const workers = parseInt(document.getElementById('inputWorkers').value);
+      const salary = parseInt(document.getElementById('inputSalary').value);
+
+      document.getElementById('valWorkers').innerText = `${workers} ${workers === 1 ? 'osoba' : (workers < 5 ? 'osoby' : 'osób')}`;
+      document.getElementById('valSalary').innerText = salary.toLocaleString('pl-PL') + ' zł';
+
+      const monthlyCost = workers * 249;
+      document.getElementById('resCost').innerText = monthlyCost.toLocaleString('pl-PL') + ' zł';
+
+      const savedHours = Math.round(workers * 168 * 0.15); // ~25h/worker
+      document.getElementById('resHours').innerText = savedHours.toLocaleString('pl-PL') + ' godz./mc';
+
+      const hourlyRate = salary / 168;
+      const savingsVal = Math.round(savedHours * hourlyRate * 1.3);
+      document.getElementById('resSavings').innerText = savingsVal.toLocaleString('pl-PL') + ' zł';
+
+      const netROI = savingsVal - monthlyCost;
+      const resNetROIEl = document.getElementById('resNetROI');
+      if (netROI > 0) {
+        resNetROIEl.innerText = '+' + netROI.toLocaleString('pl-PL') + ' zł';
+        resNetROIEl.style.color = 'var(--green)';
+      } else {
+        resNetROIEl.innerText = netROI.toLocaleString('pl-PL') + ' zł';
+        resNetROIEl.style.color = '#fca5a5';
+      }
+    }
+
+    // ========================================================
+    // ADVANCED 2D WAREHOUSE CANVAS SIMULATOR
+    // Strict Aisle Topology: NEVER goes through racks!
+    // Realistic obstacles: Blocked aisle + 2 Dynamic Forklifts
+    // ========================================================
+    let canvas, ctx;
+    let simAnimId = null;
+    let simMode = 'none';
+
+    // RACK BLOCKS (North block and South block, divided by wide 120px center boulevard)
+    const racks = [
+      // North Racks (y: 65..155, height: 90, width: 46)
+      { x: 110, y: 65, w: 46, h: 90, label: 'R-01N' },
+      { x: 230, y: 65, w: 46, h: 90, label: 'R-02N' },
+      { x: 350, y: 65, w: 46, h: 90, label: 'R-03N' },
+      { x: 470, y: 65, w: 46, h: 90, label: 'R-04N' },
+      { x: 590, y: 65, w: 46, h: 90, label: 'R-05N' },
+      { x: 710, y: 65, w: 46, h: 90, label: 'R-06N' },
+
+      // South Racks (y: 275..365, height: 90, width: 46)
+      { x: 110, y: 275, w: 46, h: 90, label: 'R-01S' },
+      { x: 230, y: 275, w: 46, h: 90, label: 'R-02S' },
+      { x: 350, y: 275, w: 46, h: 90, label: 'R-03S' },
+      { x: 470, y: 275, w: 46, h: 90, label: 'R-04S' },
+      { x: 590, y: 275, w: 46, h: 90, label: 'R-05S' },
+      { x: 710, y: 275, w: 46, h: 90, label: 'R-06S' },
+    ];
+
+    // AISLE CENTER COORDINATES (Strict mathematical centers with min. 37px clearance to racks)
+    // Aisle 0: x = 55 (West Wall Transit)
+    // Aisle 1: x = 193 (Between R1 & R2)
+    // Aisle 2: x = 313 (Between R2 & R3) -> CONTAINS STATIC BLOCKED PALLET!
+    // Aisle 3: x = 433 (Between R3 & R4) -> AI crossing junction
+    // Aisle 4: x = 553 (Between R4 & R5)
+    // Aisle 5: x = 673 (Between R5 & R6)
+    // Aisle 6: x = 795 (East Wall Transit)
+    // Cross-aisle North: y = 30 (35px to North racks)
+    // Cross-aisle Center Highway: y = 215 (60px to North racks, 60px to South racks!)
+    // Cross-aisle South: y = 415 (50px to South racks)
+
+    // STATIC OBSTACLES (Centrally placed in aisles)
+    const staticObstacles = [
+      { x: 313, y: 130, w: 30, h: 30, type: 'pallet', label: 'ZATOR: USZKODZONA PALETA' },
+      { x: 673, y: 320, w: 28, h: 28, type: 'box', label: 'PRZESZKODA: WÓZEK SERWISOWY' }
+    ];
+
+    // DYNAMIC FORKLIFTS (Safe center corridor travel)
+    let forklifts = [
+      { id: 1, x: 260, y: 215, dir: 1, minX: 170, maxX: 620, speed: 1.5, label: 'WÓZEK 1' },
+      { id: 2, x: 700, y: 415, dir: 1, minX: 580, maxX: 810, speed: 1.4, label: 'WÓZEK 2 (RAMPA)' }
+    ];
+
+    // PICK LOCATIONS (Centered in aisles right on shelf pick face)
+    const pickLocations = [
+      { id: 'P1', x: 193, y: 110, name: 'P1: Regał R-01N (EAN-128)' },
+      { id: 'P2', x: 313, y: 100, name: 'P2: Regał R-02N (EAN-13)' },
+      { id: 'P3', x: 433, y: 120, name: 'P3: Regał R-03N (EAN-128)' },
+      { id: 'P4', x: 433, y: 320, name: 'P4: Regał R-03S (SSCC)' },
+      { id: 'P5', x: 553, y: 320, name: 'P5: Regał R-05S (EAN-13)' }
+    ];
+
+    // TRADITIONAL PATH (Hits blocked pallet, backtracks into center highway, near-miss at y=215)
+    const tradPath = [
+      { x: 55, y: 415 },
+      { x: 313, y: 415 },
+      { x: 313, y: 215 },
+      { x: 313, y: 150, isBlocked: true, name: 'ZATOR: Uszkodzona paleta w alejce 2' }, // Hits block
+      { x: 313, y: 215 }, // Backtracks down into center highway
+      { x: 230, y: 215, isCollisionRisk: true }, // Blind near-miss with Forklift 1 (Safe from racks!)
+      { x: 193, y: 215 },
+      { x: 193, y: 110, isPick: true, pickId: 'P1', name: 'P1: Regał R-01N' },
+      { x: 193, y: 30 },  // North corridor
+      { x: 313, y: 30 },
+      { x: 313, y: 100, isPick: true, pickId: 'P2', name: 'P2: Regał R-02N' },
+      { x: 313, y: 30 },
+      { x: 433, y: 30 },
+      { x: 433, y: 120, isPick: true, pickId: 'P3', name: 'P3: Regał R-03N' },
+      { x: 433, y: 215 },
+      { x: 433, y: 320, isPick: true, pickId: 'P4', name: 'P4: Regał R-03S' },
+      { x: 433, y: 415 },
+      { x: 553, y: 415 },
+      { x: 553, y: 320, isPick: true, pickId: 'P5', name: 'P5: Regał R-05S' },
+      { x: 553, y: 415 },
+      { x: 55, y: 415, isFinish: true }
+    ];
+
+    // PINQUARK AI + UWB PATH
+    // Maintains generous >30-60px clearance from all racks at all times
+    const aiPath = [
+      { x: 55, y: 415 },
+      { x: 55, y: 30 },   // Outer bypass corridor
+      { x: 193, y: 30 },
+      { x: 193, y: 110, isPick: true, pickId: 'P1', name: 'P1: Regał R-01N' },
+      { x: 193, y: 30 },
+      { x: 313, y: 30 },
+      { x: 313, y: 100, isPick: true, pickId: 'P2', name: 'P2: Regał R-02N' },
+      { x: 313, y: 30 },
+      { x: 433, y: 30 },
+      { x: 433, y: 120, isPick: true, pickId: 'P3', name: 'P3: Regał R-03N' },
+      { x: 433, y: 185, isAIAntiCollision: true }, // Safe holding waypoint (30px from North rack, 30px to forklift)
+      { x: 433, y: 320, isPick: true, pickId: 'P4', name: 'P4: Regał R-03S' },
+      { x: 433, y: 415 },
+      { x: 553, y: 415 },
+      { x: 553, y: 320, isPick: true, pickId: 'P5', name: 'P5: Regał R-05S' },
+      { x: 553, y: 415 },
+      { x: 55, y: 415, isFinish: true }
+    ];
+
+    // CONTINUOUS VECTOR CART SIMULATION STATE (NO TELEPORTATION = NO FLICKER)
+    let cart = {
+      x: 55,
+      y: 415,
+      angle: -Math.PI / 2,
+      targetIdx: 1,
+      pauseFrames: 0,
+      pauseType: null,
+      pauseMessage: null
+    };
+    let completedPicks = new Set();
+    let trailPoints = [{ x: 55, y: 415 }];
+
+    function initCanvas() {
+      canvas = document.getElementById('warehouseCanvas');
+      if (!canvas) return;
+      ctx = canvas.getContext('2d');
+      drawWarehouseGrid();
+    }
+
+    function formatRealTime(totalSec) {
+      const m = Math.floor(totalSec / 60);
+      const s = Math.floor(totalSec % 60);
+      return String(m).padStart(2, '0') + ' min ' + String(s).padStart(2, '0') + ' s';
+    }
+
+    function drawWarehouseGrid() {
+      if (!ctx) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Floor grid subtle lines
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.035)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.width; x += 40) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += 40) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+      }
+
+      // Draw Center Main Highway Boundaries & Dividing Lane (y: 155..275, height 120px)
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.015)';
+      ctx.fillRect(80, 155, 750, 120);
+
+      // Highway borders
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(80, 155); ctx.lineTo(830, 155); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(80, 275); ctx.lineTo(830, 275); ctx.stroke();
+
+      // Highway centerline divider
+      ctx.strokeStyle = 'rgba(234, 179, 8, 0.35)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([8, 8]);
+      ctx.beginPath(); ctx.moveTo(85, 215); ctx.lineTo(825, 215); ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Highway label
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.16)';
+      ctx.font = 'bold 9px "Plus Jakarta Sans"';
+      ctx.fillText('GŁÓWNY CIĄG TRANSPORTOWY — SKRAJNIA BHP I BEZPIECZNE BUFORY ZACHOWANE', 220, 172);
+
+      // Draw Transit Aisles Centerlines
+      ctx.strokeStyle = 'rgba(0, 210, 255, 0.05)';
+      ctx.setLineDash([4, 4]);
+      [55, 193, 313, 433, 553, 673, 795].forEach(ax => {
+        ctx.beginPath(); ctx.moveTo(ax, 20); ctx.lineTo(ax, 440); ctx.stroke();
+      });
+      [30, 215, 415].forEach(ay => {
+        ctx.beginPath(); ctx.moveTo(20, ay); ctx.lineTo(840, ay); ctx.stroke();
+      });
+      ctx.setLineDash([]);
+
+      // Draw Safety Clearance Buffer Envelope (Strefa skrajni BHP wokół regałów)
+      ctx.strokeStyle = 'rgba(234, 179, 8, 0.28)';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 4]);
+      racks.forEach(r => {
+        ctx.strokeRect(r.x - 10, r.y - 10, r.w + 20, r.h + 20);
+      });
+      ctx.setLineDash([]);
+
+      // Draw Racks
+      racks.forEach(r => {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+        ctx.fillRect(r.x + 3, r.y + 3, r.w, r.h);
+
+        ctx.fillStyle = '#0f172a';
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 2;
+        ctx.fillRect(r.x, r.y, r.w, r.h);
+        ctx.strokeRect(r.x, r.y, r.w, r.h);
+
+        // Shelves
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.09)';
+        for (let py = r.y + 18; py < r.y + r.h; py += 22) {
+          ctx.beginPath(); ctx.moveTo(r.x, py); ctx.lineTo(r.x + r.w, py); ctx.stroke();
+        }
+
+        // Label
+        ctx.fillStyle = '#64748b';
+        ctx.font = 'bold 10px "JetBrains Mono"';
+        ctx.fillText(r.label, r.x + 5, r.y + 13);
+      });
+
+      // Draw Static Obstacles
+      staticObstacles.forEach(obs => {
+        ctx.save();
+        if (obs.type === 'pallet') {
+          ctx.fillStyle = '#b45309';
+          ctx.fillRect(obs.x - 14, obs.y - 14, obs.w, obs.h);
+          ctx.strokeStyle = '#ef4444';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(obs.x - 14, obs.y - 14, obs.w, obs.h);
+
+          ctx.fillStyle = '#78350f';
+          ctx.fillRect(obs.x - 10, obs.y - 10, obs.w - 8, 4);
+          ctx.fillRect(obs.x - 10, obs.y, obs.w - 8, 4);
+          ctx.fillRect(obs.x - 10, obs.y + 8, obs.w - 8, 4);
+
+          ctx.fillStyle = '#ef4444';
+          ctx.font = 'bold 9px "Plus Jakarta Sans"';
+          ctx.fillText('⛔ ZATOR', obs.x - 20, obs.y - 18);
+        } else {
+          ctx.fillStyle = '#475569';
+          ctx.fillRect(obs.x - 12, obs.y - 12, obs.w, obs.h);
+          ctx.strokeStyle = '#f59e0b';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(obs.x - 12, obs.y - 12, obs.w, obs.h);
+          ctx.fillStyle = '#f59e0b';
+          ctx.font = 'bold 8px "Plus Jakarta Sans"';
+          ctx.fillText('PRZESZKODA', obs.x - 26, obs.y - 16);
+        }
+        ctx.restore();
+      });
+
+      // Draw Staging / Dock Zone
+      ctx.fillStyle = 'rgba(0, 210, 255, 0.12)';
+      ctx.strokeStyle = 'var(--cyan)';
+      ctx.lineWidth = 2;
+      ctx.fillRect(25, 385, 60, 60);
+      ctx.strokeRect(25, 385, 60, 60);
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 11px "Plus Jakarta Sans"';
+      ctx.fillText('STACJA', 35, 412);
+      ctx.fillText('WYDAŃ', 35, 428);
+
+      // Draw Pick Targets (P1 - P5) with completed checkmarks
+      pickLocations.forEach(p => {
+        const isDone = completedPicks.has(p.id);
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, isDone ? 9 : 8, 0, Math.PI * 2);
+        ctx.fillStyle = isDone ? '#00e676' : '#ff007a';
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        if (isDone) {
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 10px sans-serif';
+          ctx.fillText('✓', p.x - 4, p.y + 3);
+        }
+
+        ctx.fillStyle = isDone ? '#86efac' : '#fff';
+        ctx.font = 'bold 10px "JetBrains Mono"';
+        ctx.fillText(p.name.split(':')[0], p.x + 12, p.y + 4);
+        ctx.restore();
+      });
+
+      // Draw Forklifts
+      forklifts.forEach(f => drawDetailedForklift(f));
+    }
+
+    function drawDetailedForklift(f) {
+      ctx.save();
+      const x = f.x;
+      const y = f.y;
+
+      ctx.fillStyle = '#ffb703';
+      ctx.fillRect(x - 16, y - 11, 32, 22);
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(x - 16, y - 11, 32, 22);
+
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(x - 10, y - 9, 14, 18);
+
+      ctx.fillStyle = '#94a3b8';
+      if (f.dir > 0) {
+        ctx.fillRect(x + 16, y - 7, 10, 3);
+        ctx.fillRect(x + 16, y + 4, 10, 3);
+      } else {
+        ctx.fillRect(x - 26, y - 7, 10, 3);
+        ctx.fillRect(x - 26, y + 4, 10, 3);
+      }
+
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#ef4444';
+      ctx.fill();
+
+      ctx.fillStyle = '#000';
+      ctx.font = 'bold 8px "JetBrains Mono"';
+      ctx.fillText(f.label, x - 15, y + 3);
+
+      ctx.restore();
+    }
+
+    function lerpAngle(a, b, t) {
+      let diff = (b - a) % (Math.PI * 2);
+      if (diff < -Math.PI) diff += Math.PI * 2;
+      if (diff > Math.PI) diff -= Math.PI * 2;
+      return a + diff * t;
+    }
+
+    // DRAW PICKING VEHICLE (STABLE, SMOOTH, NO BLINKING)
+    function drawPickingVehicle(x, y, angle, mode, isPicking, alertText) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+
+      const colorOutline = mode === 'ai' ? '#00e676' : '#ef4444';
+
+      // Chassis
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(-14, -9, 28, 18);
+      ctx.strokeStyle = colorOutline;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(-14, -9, 28, 18);
+
+      // Polyurethane Wheels
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(-12, -12, 6, 3);
+      ctx.fillRect(6, -12, 6, 3);
+      ctx.fillRect(-12, 9, 6, 3);
+      ctx.fillRect(6, 9, 6, 3);
+
+      // Order Boxes / Totes
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(-8, -6, 10, 12);
+      ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+      ctx.strokeRect(-8, -6, 10, 12);
+
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(4, -6, 8, 12);
+      ctx.strokeRect(4, -6, 8, 12);
+
+      // Operator Tiller Handle & UWB Tag
+      ctx.beginPath();
+      ctx.arc(-14, 0, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#00d2ff';
+      ctx.fill();
+
+      // UWB constant aura
+      ctx.beginPath();
+      ctx.arc(0, 0, 19, 0, Math.PI * 2);
+      ctx.strokeStyle = mode === 'ai' ? 'rgba(0, 230, 118, 0.4)' : 'rgba(239, 68, 68, 0.4)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      ctx.restore();
+
+      // Non-rotating annotations above vehicle
+      if (isPicking) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(0, 230, 118, 0.95)';
+        ctx.font = 'bold 11px "Plus Jakarta Sans"';
+        ctx.fillText('📦 POBIERANIE POZYCJI (EAN ✓)', x - 75, y - 24);
+
+        ctx.beginPath();
+        ctx.arc(x, y, 25, 0, Math.PI * 2);
+        ctx.strokeStyle = '#00e676';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      if (alertText) {
+        ctx.save();
+        const isGreen = alertText.startsWith('🛡️');
+        ctx.fillStyle = isGreen ? 'rgba(0, 230, 118, 0.95)' : 'rgba(239, 68, 68, 0.95)';
+        ctx.font = 'bold 12px "Plus Jakarta Sans"';
+        ctx.fillText(alertText, x - 110, y - 26);
+        ctx.restore();
+      }
+    }
+
+    function drawPathLine(path, color = '#00e676', dashed = false) {
+      if (!path || path.length < 2) return;
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3.5;
+      if (dashed) ctx.setLineDash([7, 5]);
+      ctx.beginPath();
+      ctx.moveTo(path[0].x, path[0].y);
+      for (let i = 1; i < path.length; i++) {
+        ctx.lineTo(path[i].x, path[i].y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function runSimulation(mode) {
+      simMode = mode;
+      document.getElementById('btnSimTrad').classList.toggle('active', mode === 'trad');
+      document.getElementById('btnSimAI').classList.toggle('active', mode === 'ai');
+
+      if (simAnimId) cancelAnimationFrame(simAnimId);
+
+      const activePath = mode === 'trad' ? tradPath : aiPath;
+      
+      // Reset continuous state
+      cart.x = activePath[0].x;
+      cart.y = activePath[0].y;
+      cart.angle = -Math.PI / 2;
+      cart.targetIdx = 1;
+      cart.pauseFrames = 0;
+      cart.pauseType = null;
+      cart.pauseMessage = null;
+      completedPicks.clear();
+      trailPoints = [{ x: cart.x, y: cart.y }];
+
+      // Target realistic times
+      const totalDist = mode === 'trad' ? 485 : 260;
+      const targetRealSeconds = mode === 'trad' ? 760 : 230; // 12m 40s vs 3m 50s
+      let elapsedRealSeconds = 0;
+
+      document.getElementById('simDistance').innerText = totalDist + ' m';
+      document.getElementById('simDistance').style.color = mode === 'trad' ? '#fca5a5' : '#86efac';
+      document.getElementById('simDistSub').innerText = mode === 'trad' ? 'Dystans z nawrotami (+86% drogi)' : 'Optymalna pętla TSP (-46% drogi)';
+
+      document.getElementById('simTime').innerText = formatRealTime(0);
+      document.getElementById('simTime').style.color = mode === 'trad' ? '#fca5a5' : '#86efac';
+      document.getElementById('simTimeSub').innerText = mode === 'trad' ? '⚠️ Strata czasu na zatory i szukanie półek' : '⚡ 1s animacji ≈ 20s pracy w magazynie';
+
+      document.getElementById('simPicksCount').innerText = '0 / 5 pozycji';
+      document.getElementById('simPickProgressBar').style.width = '0%';
+      document.getElementById('simPickProgressBar').style.background = mode === 'trad' ? '#ef4444' : '#00e676';
+
+      const statusEl = document.getElementById('simStatus');
+      if (mode === 'trad') {
+        statusEl.innerHTML = '<span style="color:#ef4444;">⚠️ Brak optymalizacji + Zatory</span>';
+      } else {
+        statusEl.innerHTML = '<span style="color:#00e676;">⚡ AI: Dynamiczna Antykolizja & Płynny Obieg</span>';
+      }
+
+      function step() {
+        // 1. Move Forklifts strictly clamped within their designated corridors
+        forklifts.forEach(f => {
+          f.x += f.dir * f.speed;
+          if (f.dir > 0 && f.x >= f.maxX) {
+            f.x = f.maxX;
+            f.dir = -1;
+          } else if (f.dir < 0 && f.x <= f.minX) {
+            f.x = f.minX;
+            f.dir = 1;
+          }
+        });
+
+        // 2. Draw static warehouse & pick faces
+        drawWarehouseGrid();
+
+        // 3. Draw planned route dashed in background
+        drawPathLine(activePath, mode === 'trad' ? 'rgba(239, 68, 68, 0.25)' : 'rgba(0, 230, 118, 0.25)', true);
+
+        // 4. Draw continuous active trail (NEVER jumps, shrinks or flickers)
+        drawPathLine(trailPoints.concat([{ x: cart.x, y: cart.y }]), mode === 'trad' ? '#ef4444' : '#00e676', false);
+
+        // 5. Check if route is finished
+        if (cart.targetIdx >= activePath.length) {
+          drawPickingVehicle(cart.x, cart.y, cart.angle, mode, false, null);
+          document.getElementById('simTime').innerText = formatRealTime(targetRealSeconds);
+          document.getElementById('simPicksCount').innerText = '5 / 5 pozycji (Zakończono)';
+          document.getElementById('simPickProgressBar').style.width = '100%';
+          return;
+        }
+
+        // 6. Handle active pause (at pick point, blocked obstacle, or collision event)
+        if (cart.pauseFrames > 0) {
+          cart.pauseFrames--;
+          drawPickingVehicle(cart.x, cart.y, cart.angle, mode, cart.pauseType === 'pick', cart.pauseMessage);
+
+          // Real time continues advancing during operation pause
+          elapsedRealSeconds = Math.min(targetRealSeconds, elapsedRealSeconds + (targetRealSeconds / 480));
+          document.getElementById('simTime').innerText = formatRealTime(elapsedRealSeconds);
+
+          simAnimId = requestAnimationFrame(step);
+          return;
+        }
+
+        // 7. Check DYNAMIC UWB TRAFFIC CONTROL IN AI MODE:
+        // When approaching the middle highway crossing at x = 433:
+        // If Forklift 1 is approaching the intersection, our AI yields with safe clearance (>2m from racks and forklift)
+        let mustYieldAI = false;
+        if (mode === 'ai') {
+          if ((cart.targetIdx === 10 || cart.targetIdx === 11) && Math.abs(forklifts[0].x - 433) < 110) {
+            mustYieldAI = true;
+          }
+        }
+
+        if (mustYieldAI) {
+          drawPickingVehicle(cart.x, cart.y, cart.angle, mode, false, '🛡️ AI UWB: BEZPIECZNY BUFOR BHP > 2.0 m');
+          statusEl.innerHTML = '<span style="color:#00e676;">🛡️ AI UWB: Wykryto wózek 1 — zachowano bezpieczną odległość od regałów i pojazdu</span>';
+          
+          elapsedRealSeconds = Math.min(targetRealSeconds, elapsedRealSeconds + (targetRealSeconds / 600));
+          document.getElementById('simTime').innerText = formatRealTime(elapsedRealSeconds);
+
+          simAnimId = requestAnimationFrame(step);
+          return;
+        }
+
+        // 8. Continuous forward motion towards active waypoint
+        const target = activePath[cart.targetIdx];
+        const dx = target.x - cart.x;
+        const dy = target.y - cart.y;
+        const dist = Math.hypot(dx, dy);
+        const speed = mode === 'ai' ? 3.8 : 2.8;
+
+        if (dist <= speed) {
+          // Arrived precisely at waypoint without overshoot
+          cart.x = target.x;
+          cart.y = target.y;
+          trailPoints.push({ x: target.x, y: target.y });
+          cart.targetIdx++;
+
+          // Check if waypoint has special trigger
+          if (target.isPick) {
+            completedPicks.add(target.pickId);
+            cart.pauseFrames = 48; // pause for pick
+            cart.pauseType = 'pick';
+            cart.pauseMessage = null;
+
+            const count = completedPicks.size;
+            document.getElementById('simPicksCount').innerText = `${count} / 5 pozycji`;
+            document.getElementById('simPickProgressBar').style.width = `${(count / 5) * 100}%`;
+            statusEl.innerHTML = `<span style="color:#00e676;">📦 Pomyślnie pobrano: ${target.name}</span>`;
+          } else if (target.isBlocked) {
+            cart.pauseFrames = 55;
+            cart.pauseType = 'blocked';
+            cart.pauseMessage = '⛔ ZATOR! USZKODZONA PALETA — NAWRÓT!';
+            statusEl.innerHTML = '<span style="color:#ef4444;">⛔ Blokada alejki 2! Konieczne cofnięcie wózka (+2 min)</span>';
+          } else if (target.isCollisionRisk) {
+            cart.pauseFrames = 50;
+            cart.pauseType = 'collision';
+            cart.pauseMessage = '💥 ZAGROŻENIE KOLIZJĄ! Nagłe hamowanie (Brak UWB)!';
+            statusEl.innerHTML = '<span style="color:#ef4444;">💥 Ostrzeżenie kolizyjne! Brak czujników UWB — zator w korytarzu</span>';
+          }
+        } else {
+          // Continuous vector movement (never resets backward = zero flicker)
+          cart.x += (dx / dist) * speed;
+          cart.y += (dy / dist) * speed;
+          const targetAngle = Math.atan2(dy, dx);
+          cart.angle = lerpAngle(cart.angle, targetAngle, 0.25);
+        }
+
+        drawPickingVehicle(cart.x, cart.y, cart.angle, mode, false, null);
+
+        // Update real time counter proportionally
+        const progressTotal = cart.targetIdx / (activePath.length - 1);
+        elapsedRealSeconds = Math.min(targetRealSeconds, progressTotal * targetRealSeconds);
+        document.getElementById('simTime').innerText = formatRealTime(elapsedRealSeconds);
+
+        simAnimId = requestAnimationFrame(step);
+      }
+
+      simAnimId = requestAnimationFrame(step);
+    }
+
+    // ========================================================
+    // AUTO-HIDING TOP BAR (PROXIMITY & HOVER LOGIC)
+    // ========================================================
+    let topBarHideTimeout = null;
+    const topBarEl = document.querySelector('.top-bar');
+
+    window.addEventListener('mousemove', (e) => {
+      // Reveal when mouse approaches top 65px or is hovering over top-bar
+      if (e.clientY <= 65) {
+        if (topBarHideTimeout) {
+          clearTimeout(topBarHideTimeout);
+          topBarHideTimeout = null;
+        }
+        if (topBarEl) topBarEl.classList.add('revealed');
+      } else if (e.clientY > 85 && (!topBarEl || !topBarEl.matches(':hover'))) {
+        if (!topBarHideTimeout) {
+          topBarHideTimeout = setTimeout(() => {
+            const overlay = document.getElementById('deepDiveOverlay');
+            if (!overlay || !overlay.classList.contains('open')) {
+              if (topBarEl) topBarEl.classList.remove('revealed');
+            }
+            topBarHideTimeout = null;
+          }, 350);
+        }
+      }
+    });
+
+    if (topBarEl) {
+      topBarEl.addEventListener('mouseenter', () => {
+        if (topBarHideTimeout) clearTimeout(topBarHideTimeout);
+        topBarEl.classList.add('revealed');
+      });
+
+      topBarEl.addEventListener('mouseleave', () => {
+        topBarHideTimeout = setTimeout(() => {
+          topBarEl.classList.remove('revealed');
+        }, 350);
+      });
+    }
+
+    function toggleTopBarManually() {
+      if (topBarEl) {
+        topBarEl.classList.toggle('revealed');
+      }
+    }
+
+  </script>
+</body>
+</html>

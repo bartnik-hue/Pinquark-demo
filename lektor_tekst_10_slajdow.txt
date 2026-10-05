@@ -1,0 +1,29 @@
+SLAJD 1: WPROWADZENIE
+Bóg stworzył świat w siedem dni. Z nami stworzysz nowoczesny magazyn w zaledwie dwadzieścia cztery godziny. Poznaj Pinquark WMS – chmurową platformę nowej generacji, sterowaną przez sztuczną inteligencję oraz czujniki Ultra-Wideband. Za rozwiązaniem stoi Meritus Spółka Akcyjna – polski software house z ponad trzydziestoletnim doświadczeniem i bazą ponad dwustu wdrożeń w logistyce i przemyśle. Zapomnij o wielomiesięcznych projektach i kosztownej infrastrukturze serwerowej. Twój inteligentny magazyn jest gotowy do działania od zaraz.
+
+SLAJD 2: TRZY FILARY PLATFORMY
+Ekosystem Pinquark opiera się na trzech filarach. Po pierwsze: Stwórz. Uruchom swój magazyn w chmurze w pięć minut. Projektuj alejki i regały metodą przeciągnij i upuść w przeglądarce, bez zakupu serwerów. Po drugie: Zoptymalizuj. Wykorzystaj sztuczną inteligencję, aby zredukować koszty operacyjne nawet o połowę i zwiększyć wydajność kompletacji o dwadzieścia pięć procent. Po trzecie: Napędzaj. Skaluj biznes elastycznie w modelu subskrypcyjnym, płacąc wyłącznie za aktywnych użytkowników.
+
+SLAJD 3: KREATOR LOW-CODE & PWA
+Koniec z wielotygodniowym oczekiwaniem na zmiany w systemie. Dzięki wbudowanemu kreatorowi Low-Code, kierownik magazynu może samodzielnie modyfikować ekrany, przyciski i sekwencje skanowania bez pomocy programistów. Nasza aplikacja mobilna działa w nowoczesnym standardzie Progressive Web App. Uruchomisz ją błyskawicznie na profesjonalnych terminalach marek Zebra czy Honeywell, a także na dowolnych smartfonach i tabletach. System wspiera pracę w trybie offline, gwarantując ciągłość operacji nawet przy chwilowej utracie zasięgu sieci bezprzewodowej.
+
+SLAJD 4: AI W AKCJI - ANTYKOLIZJA I OPTYMALIZACJA TRAS
+Oto sztuczna inteligencja w praktyce. Nasz silnik planowania tras operuje na grafie czasoprzestrzennym. Wyznacza optymalne ścieżki zbiórki towarów, prowadząc wózek wyłącznie korytarzami magazynowymi i zawsze z zachowaniem bezpiecznej skrajni od regałów. Gdy w alejce pojawi się przeszkoda lub inny wózek widłowy, algorytm w ułamku sekundy koryguje trajektorię, zapobiegając zatorom i kolizjom. Wynik to skrócenie łącznego dystansu pokonywanego przez pracowników o dwadzieścia pięć procent i oszczędność setek roboczogodzin w każdym miesiącu.
+
+SLAJD 5: PINQUARK NAVIGATOR - GOOGLE MAPS DLA MAGAZYNU
+Pinquark Navigator to rewolucyjny moduł, który działa jak wewnętrzny system GPS w hali magazynowej. Wyświetla cyfrową mapę obiektu na terminalu magazyniera, prowadząc go krok po kroku najszybszą i najbezpieczniejszą trasą pod właściwe gniazdo regałowe. Navigator diametralnie przyspiesza wdrożenie nowych pracowników – nowa osoba już pierwszego dnia pracuje bez błądzenia po obiekcie. Dodatkowo moduł stale monitoruje otoczenie i ostrzega pieszego przed zbliżającym się wózkiem widłowym, eliminując ryzyko wypadków przy pracy.
+
+SLAJD 6: INTELIGENTNE CZUJNIKI UWB - HARDWARE I PRECYZJA RTLS
+Sercem pozycjonowania w Pinquark są przemysłowe czujniki Ultra-Wideband oparte na układach DecaWave. W odróżnieniu od sygnału GPS, Wi-Fi czy Bluetooth, technologia UWB jest w pełni odporna na odbicia fal radiowych w stalowych halach wysokiego składu i mierzy czas przelotu sygnału z dokładnością poniżej pięćdziesięciu centymetrów. Lekkie tagi noszone przez magazynierów i montowane na wózkach łączą się z kotwicami na słupach oraz bramkami Raspberry Pi. System automatycznie generuje mapy ciepła oraz cyfrowe diagramy ruchu, wskazując wąskie gardła i strefy o najwyższej roboczochłonności.
+
+SLAJD 7: PINQUARK TERMINAL - ZARZĄDZANIE BRAMAMI I PLACEM (YMS)
+Pinquark to nie tylko wnętrze hali, ale także kompleksowe zarządzanie ruchem na zewnątrz magazynu. Moduł Pinquark Terminal automatyzuje wjazd pojazdów ciężarowych dzięki kamerom OCR, które w ułamku sekundy odczytują numery tablic rejestracyjnych oraz kontenerów i sterują szlabanami oraz wagami. Kierowcy TIR dokonują samodzielnej odprawy w wielojęzycznych info-kioskach w zaledwie trzydzieści sekund za pomocą kodu QR. Z kolei moduł rezerwacji okien czasowych z interaktywnym wykresem Gantta pozwala przewoźnikom planować sloty awizacyjne, całkowicie eliminując kolejki przed obiektem.
+
+SLAJD 8: PROCESY WMS & OTWARTE API
+Platforma Pinquark wspiera pełen łańcuch procesów logistycznych: od przyjęcia dostaw, kontroli jakości i cross-dockingu, przez dynamiczne zarządzanie regałami w oparciu o rotację ABC, aż po wielozamówieniową kompletację multi-order picking, pakowanie i obsługę zwrotów e-commerce. Dzięki otwartemu interfejsowi REST API oraz wsparciu standardów EDI, Pinquark integruje się bezproblemowo z systemami nadrzędnymi klasy ERP, takimi jak SAP, Comarch, Subiekt GT i Nexo, Enova365 oraz Baselinker.
+
+SLAJD 9: FAKTY, LICZBY I LIDERZY RYNKU
+Skuteczność Pinquark potwierdzają twarde fakty z rynku. U wiodącego dystrybutora artykułów szkolnych i biurowych H2 Dystrybucja wdrożenie przyniosło obsłużenie ponad sześciuset zamówień dziennie i skrócenie tras w alejkach o dwadzieścia pięć procent, bez konieczności zatrudniania nowych osób. Z kolei w centrum logistycznym Laude Smart Intermodal czas pobytu ciągnika siodłowego na placu skrócono z ponad godziny do zaledwie piętnastu minut, wydajność załogi wzrosła o trzydzieści pięć procent, a obieg dokumentów stał się w stu procentach cyfrowy. Zaufały nam także takie marki jak Vision Express, GEM czy Euro Eko.
+
+SLAJD 10: KALKULATOR ROI & PODSUMOWANIE
+Inwestycja w Pinquark zwraca się błyskawicznie – według naszych wdrożeń pełny zwrot z inwestycji następuje już w ciągu trzydziestu dni. Oferujemy przejrzysty model abonamentowy: stała opłata dwieście czterdzieści dziewięć złotych netto miesięcznie za aktywnego użytkownika, bez ukrytych kosztów i bez opłat za serwery. W cenie zyskujesz pełny system WMS, silnik AI, aplikację mobilną oraz wsparcie techniczne. Skorzystaj z naszego kalkulatora, policz swoje miesięczne oszczędności i umów się na bezpłatne demo na Twoim magazynie.
